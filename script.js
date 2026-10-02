@@ -31,9 +31,11 @@
  * Automatically targets port 3000 if served via a local web server or file host,
  * while respecting origin host in production deployments.
  */
-const API = (window.location.origin && window.location.origin.startsWith('http'))
-  ? window.location.origin
-  : 'http://localhost:3001';
+const LIVE_BACKEND_URL = 'https://task-manager-backend-km6q.onrender.com';
+
+const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? (window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3001')
+  : LIVE_BACKEND_URL;
 
 // ==============================================================================
 // 2. Application State Management

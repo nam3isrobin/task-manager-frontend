@@ -13,31 +13,31 @@
 # Proxy rules routing API requests to backend host (fallback to localhost:3000 in dev)
 [[redirects]]
   from = "/tasks/*"
-  to = "http://localhost:3000/tasks/:splat"
+  to = "https://task-manager-backend-km6q.onrender.com/tasks/:splat"
   status = 200
   force = false
 
 [[redirects]]
   from = "/tasks"
-  to = "http://localhost:3000/tasks"
+  to = "https://task-manager-backend-km6q.onrender.com/tasks"
   status = 200
   force = false
 
 [[redirects]]
   from = "/users/*"
-  to = "http://localhost:3000/users/:splat"
+  to = "https://task-manager-backend-km6q.onrender.com/users/:splat"
   status = 200
   force = false
 
 [[redirects]]
   from = "/users"
-  to = "http://localhost:3000/users"
+  to = "https://task-manager-backend-km6q.onrender.com/users"
   status = 200
   force = false
 
 [[redirects]]
   from = "/api/*"
-  to = "http://localhost:3000/api/:splat"
+  to = "https://task-manager-backend-km6q.onrender.com/api/:splat"
   status = 200
   force = false
 

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Character encoding and viewport configuration for responsive layout -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0d1117">
+  <title>TaskMaster Pro | Fullstack Task Manager</title>
+
+  <!-- Typography: Inter & Outfit from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Application Stylesheet (Pure Vanilla CSS) -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Root application wrapper with maximum width 720px -->
+  <div class="app-container">
+    
+    <!-- ==================================================================== -->
+    <!-- Application Header & User Switcher (Assignment 4: Multiple Users)    -->
+    <!-- ==================================================================== -->
+    <header class="app-header">
+      <div class="brand-group">
+        <div class="brand-logo" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1 class="brand-title">TaskMaster Pro</h1>
+          <p class="brand-subtitle">Streamlined Task & Workflow Manager</p>
+        </div>
+      </div>
+
+      <!-- User Switcher & Profile Creator Controls -->
+      <div class="user-control-bar" role="region" aria-label="User Selection Controls">
+        <label for="userSelect" class="sr-only">Active User Filter</label>
+        <div class="select-wrapper user-select-wrapper">
+          <select id="userSelect" class="form-select user-select" aria-label="Select Active User Profile">
+            <option value="">All Users (Global)</option>
+          </select>
+        </div>
+        <button type="button" id="openUserModalBtn" class="btn btn-secondary btn-icon" title="Create New User Profile" aria-label="Create New User Profile">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="8.5" cy="7.5" r="4"/>
+            <line x1="20" y1="8" x2="20" y2="14"/>
+            <line x1="23" y1="11" x2="17" y2="11"/>
+          </svg>
+          <span class="btn-text">New User</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ==================================================================== -->
+    <!-- Task Creation Section (Core CRUD + Assignment 2 Categories)         -->
+    <!-- ==================================================================== -->
+    <section class="card form-card" aria-labelledby="createTaskHeading">
+      <h2 id="createTaskHeading" class="sr-only">Create New Task</h2>
+      <form id="taskForm" class="task-form" autocomplete="off">
+        <div class="form-row primary-row">
+          <div class="input-wrapper">
+            <input 
+              type="text" 
+              id="taskTitleInput" 
+              class="form-input title-input" 
+              placeholder="What needs to be accomplished?" 
+              required 
+              minlength="1" 
+              maxlength="200"
+              aria-label="New Task Title"
+            >
+          </div>
+          <button type="submit" id="addTaskBtn" class="btn btn-primary" aria-label="Add Task to List">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span>Add Task</span>
+          </button>
+        </div>
+
+        <div class="form-row secondary-row">
+          <!-- Assignment 2: Category Selector -->
+          <div class="form-field">
+            <label for="taskCategorySelect" class="form-label">Category</label>
+            <div class="select-wrapper">
+              <select id="taskCategorySelect" class="form-select category-select" aria-label="Task Category">
+                <option value="Personal" selected>Personal</option>
+                <option value="Work">Work</option>
+                <option value="Urgent">Urgent</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Assignment 4: Relational User Assignment -->
+          <div class="form-field">
+            <label for="taskUserSelect" class="form-label">Assign To</label>
+            <div class="select-wrapper">
+              <select id="taskUserSelect" class="form-select user-assign-select" aria-label="Assign to User">
+                <option value="">Unassigned (None)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- ==================================================================== -->
+    <!-- Filter, Search & Sort Toolbar (Assignments 2 & 3)                    -->
+    <!-- ==================================================================== -->
+    <section class="card toolbar-card" role="toolbar" aria-label="Task Filters and Sorting">
+      <!-- Status Filter Tabs -->
+      <div class="filter-tabs" role="tablist" aria-label="Filter by Completion Status">
+        <button type="button" class="tab-btn active" data-status="all" role="tab" aria-selected="true">
+          All
+        </button>
+        <button type="button" class="tab-btn" data-status="active" role="tab" aria-selected="false">
+          Active
+        </button>
+        <button type="button" class="tab-btn" data-status="completed" role="tab" aria-selected="false">
+          Completed
+        </button>
+      </div>
+
+      <div class="toolbar-actions">
+        <!-- Assignment 2: Category Filter Dropdown -->
+        <div class="select-wrapper category-filter-wrapper">
+          <label for="categoryFilter" class="sr-only">Filter by Category</label>
+          <select id="categoryFilter" class="form-select filter-select" aria-label="Filter tasks by category">
+            <option value="all">All Categories</option>
+            <option value="Work">Work</option>
+            <option value="Personal">Personal</option>
+            <option value="Urgent">Urgent</option>
+          </select>
+        </div>
+
+        <!-- Assignment 3: Chronological Sort Toggle -->
+        <button type="button" id="sortToggleBtn" class="btn btn-outline sort-btn" data-sort="desc" title="Toggle sorting order (Newest / Oldest)" aria-label="Toggle sort order">
+          <svg id="sortDescIcon" class="sort-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <polyline points="19 12 12 19 5 12"/>
+          </svg>
+          <svg id="sortAscIcon" class="sort-icon hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="19" x2="12" y2="5"/>
+            <polyline points="5 12 12 5 19 12"/>
+          </svg>
+          <span id="sortLabel">Newest First</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================================================================== -->
+    <!-- Status Bar / Task Counter & Progress Display                        -->
+    <!-- ==================================================================== -->
+    <div class="status-summary-bar" role="status" aria-live="polite">
+      <div class="summary-text-group">
+        <span id="statusCounter" class="status-counter-text">Loading tasks...</span>
+        <span id="activeFilterBadge" class="filter-pill-badge hidden">Filtered</span>
+      </div>
+      <div class="progress-track" title="Completion Progress" aria-label="Task completion progress">
+        <div id="progressBar" class="progress-fill" style="width: 0%;"></div>
+      </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- Task List & Empty State Container                                    -->
+    <!-- ==================================================================== -->
+    <main class="tasks-container">
+      <ul id="taskList" class="task-list" aria-label="List of Tasks">
+        <!-- Rendered dynamically by script.js -->
+      </ul>
+
+      <!-- Empty State Placeholder (Visible when tasks array is empty) -->
+      <div id="emptyState" class="empty-state hidden" role="region" aria-label="Empty State">
+        <div class="empty-icon" aria-hidden="true">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">No tasks found</h3>
+        <p class="empty-description">There are no tasks matching your current view. Create a new task above to get started!</p>
+      </div>
+    </main>
+
+    <!-- App Footer -->
+    <footer class="app-footer">
+      <p>TaskMaster Pro &bull; Production Fullstack Architecture (Day 19)</p>
+    </footer>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- Assignment 1: Edit Task Modal Dialog                                  -->
+  <!-- ====================================================================== -->
+  <div id="editModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="editModalTitle" class="modal-title">Edit Task</h3>
+        <button type="button" id="closeEditModalBtn" class="btn-close" aria-label="Close Edit Modal">&times;</button>
+      </div>
+      <form id="editTaskForm" class="modal-form">
+        <input type="hidden" id="editTaskId">
+        
+        <div class="form-field">
+          <label for="editTaskTitle" class="form-label">Task Title <span class="required">*</span></label>
+          <input 
+            type="text" 
+            id="editTaskTitle" 
+            class="form-input" 
+            required 
+            minlength="1" 
+            maxlength="200"
+            aria-label="Edit Task Title"
+          >
+        </div>
+
+        <div class="form-field">
+          <label for="editTaskCategory" class="form-label">Category</label>
+          <div class="select-wrapper">
+            <select id="editTaskCategory" class="form-select" aria-label="Edit Task Category">
+              <option value="Work">Work</option>
+              <option value="Personal">Personal</option>
+              <option value="Urgent">Urgent</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="editTaskUser" class="form-label">Assigned User</label>
+          <div class="select-wrapper">
+            <select id="editTaskUser" class="form-select" aria-label="Edit Assigned User">
+              <option value="">Unassigned (None)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-field checkbox-field">
+          <label class="checkbox-label">
+            <input type="checkbox" id="editTaskCompleted" class="form-checkbox">
+            <span class="checkbox-text">Mark task as completed</span>
+          </label>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="cancelEditBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="saveEditBtn" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- Assignment 4: Create User Profile Modal Dialog                        -->
+  <!-- ====================================================================== -->
+  <div id="userModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="userModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="userModalTitle" class="modal-title">Create User Profile</h3>
+        <button type="button" id="closeUserModalBtn" class="btn-close" aria-label="Close User Modal">&times;</button>
+      </div>
+      <form id="createUserForm" class="modal-form" autocomplete="off">
+        <div class="form-field">
+          <label for="newUsername" class="form-label">Username <span class="required">*</span></label>
+          <input 
+            type="text" 
+            id="newUsername" 
+            class="form-input" 
+            placeholder="e.g. alex_dev" 
+            required 
+            minlength="2" 
+            maxlength="50"
+            aria-label="Username"
+          >
+          <span class="field-hint">Must be 2 to 50 characters, unique across all users.</span>
+        </div>
+
+        <div class="form-field">
+          <label for="newUserEmail" class="form-label">Email Address (Optional)</label>
+          <input 
+            type="email" 
+            id="newUserEmail" 
+            class="form-input" 
+            placeholder="e.g. alex@example.com"
+            aria-label="Email Address"
+          >
+          <span class="field-hint">Used for identification and notifications.</span>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="cancelUserBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="saveUserBtn" class="btn btn-primary">Create Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- Toast Notification Feedback Container                                 -->
+  <!-- ====================================================================== -->
+  <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Axios Library via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <!-- Client Application Logic -->
+  <script src="script.js"></script>
+</body>
+</html>

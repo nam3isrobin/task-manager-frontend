@@ -1,0 +1,48 @@
+# ==============================================================================
+# Netlify Static Deployment & Proxy Configuration (`netlify.toml`)
+# ==============================================================================
+# Configures the build output directory and API reverse-proxy redirects for
+# hosting the TaskMaster Pro frontend on Netlify while directing REST API calls
+# to the Express backend service.
+# ==============================================================================
+
+[build]
+  # Directory containing index.html, style.css, script.js, and static assets
+  publish = "."
+
+# Proxy rules routing API requests to backend host (fallback to localhost:3000 in dev)
+[[redirects]]
+  from = "/tasks/*"
+  to = "http://localhost:3000/tasks/:splat"
+  status = 200
+  force = false
+
+[[redirects]]
+  from = "/tasks"
+  to = "http://localhost:3000/tasks"
+  status = 200
+  force = false
+
+[[redirects]]
+  from = "/users/*"
+  to = "http://localhost:3000/users/:splat"
+  status = 200
+  force = false
+
+[[redirects]]
+  from = "/users"
+  to = "http://localhost:3000/users"
+  status = 200
+  force = false
+
+[[redirects]]
+  from = "/api/*"
+  to = "http://localhost:3000/api/:splat"
+  status = 200
+  force = false
+
+# Single Page Application (SPA) fallback to ensure index.html handles routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

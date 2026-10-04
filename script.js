@@ -115,16 +115,40 @@ const state = {
 
 const DOM = {
   // Authentication Bar & Header Controls
+  // Authentication Bar & Header Controls
   authControlBar: document.getElementById('authControlBar'),
   authGuestView: document.getElementById('authGuestView'),
   authUserView: document.getElementById('authUserView'),
+  adminPortalBtn: document.getElementById('adminPortalBtn'),
   openAuthModalBtn: document.getElementById('openAuthModalBtn'),
   userProfileBadge: document.getElementById('userProfileBadge'),
   userAvatarText: document.getElementById('userAvatarText'),
   userHandle: document.getElementById('userHandle'),
   signOutBtn: document.getElementById('signOutBtn'),
 
-  // Auth Modal Dialog & Tab Switcher
+  // Dedicated Fullscreen Authentication View & App Container
+  authFullscreenView: document.getElementById('authFullscreenView'),
+  appDashboard: document.getElementById('appDashboard'),
+  tabSignInFsBtn: document.getElementById('tabSignInFsBtn'),
+  tabRegisterFsBtn: document.getElementById('tabRegisterFsBtn'),
+  authFsErrorAlert: document.getElementById('authFsErrorAlert'),
+  authFsErrorText: document.getElementById('authFsErrorText'),
+  signInFsPanel: document.getElementById('signInFsPanel'),
+  registerFsPanel: document.getElementById('registerFsPanel'),
+  signInFsForm: document.getElementById('signInFsForm'),
+  loginFsUsername: document.getElementById('loginFsUsername'),
+  loginFsPassword: document.getElementById('loginFsPassword'),
+  submitLoginFsBtn: document.getElementById('submitLoginFsBtn'),
+  registerFsForm: document.getElementById('registerFsForm'),
+  registerFsUsername: document.getElementById('registerFsUsername'),
+  registerFsEmail: document.getElementById('registerFsEmail'),
+  registerFsPassword: document.getElementById('registerFsPassword'),
+  registerFsConfirmPassword: document.getElementById('registerFsConfirmPassword'),
+  submitRegisterFsBtn: document.getElementById('submitRegisterFsBtn'),
+  demoUserPill: document.getElementById('demoUserPill'),
+  demoAdminPill: document.getElementById('demoAdminPill'),
+
+  // Auth Modal Dialog & Tab Switcher (Secondary / Legacy modal)
   authModal: document.getElementById('authModal'),
   authModalTitle: document.getElementById('authModalTitle'),
   closeAuthModalBtn: document.getElementById('closeAuthModalBtn'),
@@ -298,18 +322,35 @@ async function checkAuthSession() {
 
 /**
  * Updates header, status bar, and workspace based on authentication status.
+ * Enforces fullscreen dedicated authentication portal when unauthenticated.
  */
 function updateAuthUI() {
   const isAuthenticated = Boolean(state.currentUser && localStorage.getItem('tm_token'));
 
   if (isAuthenticated) {
-    // Reveal authenticated user controls
+    // 1. Hide fullscreen authentication view
+    if (DOM.authFullscreenView) DOM.authFullscreenView.classList.add('hidden');
+
+    // 2. Display main dashboard application view
+    if (DOM.appDashboard) DOM.appDashboard.classList.remove('hidden');
+
+    // 3. Reveal authenticated user controls in dashboard header
     if (DOM.authGuestView) DOM.authGuestView.classList.add('hidden');
     if (DOM.authUserView) DOM.authUserView.classList.remove('hidden');
 
     const username = state.currentUser.username || 'user';
     if (DOM.userHandle) DOM.userHandle.textContent = `@${username}`;
     if (DOM.userAvatarText) DOM.userAvatarText.textContent = username.charAt(0).toUpperCase();
+
+    // 4. Role Authorization: Show "Admin Portal" button if role is admin or username is admin
+    const isAdmin = Boolean(state.currentUser && (state.currentUser.role === 'admin' || state.currentUser.username === 'admin'));
+    if (DOM.adminPortalBtn) {
+      if (isAdmin) {
+        DOM.adminPortalBtn.classList.remove('hidden');
+      } else {
+        DOM.adminPortalBtn.classList.add('hidden');
+      }
+    }
 
     // Enable task creation form inputs
     if (DOM.taskTitleInput) {
@@ -321,28 +362,192 @@ function updateAuthUI() {
     // Hide guest state placeholder
     if (DOM.guestState) DOM.guestState.classList.add('hidden');
   } else {
-    // Reveal unauthenticated guest controls
+    // 1. COMPLETELY hide the main application dashboard (ZERO elements beneath auth portal)
+    if (DOM.appDashboard) DOM.appDashboard.classList.add('hidden');
+
+    // 2. Display dedicated fullscreen auth container centered on viewport
+    if (DOM.authFullscreenView) DOM.authFullscreenView.classList.remove('hidden');
+
+    // 3. Hide authenticated controls
     if (DOM.authGuestView) DOM.authGuestView.classList.remove('hidden');
     if (DOM.authUserView) DOM.authUserView.classList.add('hidden');
+    if (DOM.adminPortalBtn) DOM.adminPortalBtn.classList.add('hidden');
 
-    // Display guest state in task list viewport
+    // Clean up task list memory
     if (DOM.taskList) DOM.taskList.innerHTML = '';
     if (DOM.emptyState) DOM.emptyState.classList.add('hidden');
-    if (DOM.guestState) DOM.guestState.classList.remove('hidden');
+  }
+}
 
-    // Display status bar onboarding prompt
-    if (DOM.statusCounter) {
-      DOM.statusCounter.textContent = 'Please sign in to view and manage your private tasks.';
-    }
-    if (DOM.progressBar) DOM.progressBar.style.width = '0%';
-    if (DOM.activeFilterBadge) DOM.activeFilterBadge.classList.add('hidden');
+/**
+ * Switches the active tab in the fullscreen authentication view ('signin' | 'register').
+ * @param {'signin'|'register'} tab - Target tab
+ */
+function switchFullscreenAuthTab(tab) {
+  clearFullscreenAuthError();
 
-    // Disable task creation form inputs
-    if (DOM.taskTitleInput) {
-      DOM.taskTitleInput.disabled = true;
-      DOM.taskTitleInput.placeholder = 'Sign in above to create and manage tasks...';
+  if (tab === 'signin') {
+    if (DOM.tabSignInFsBtn) {
+      DOM.tabSignInFsBtn.classList.add('active');
+      DOM.tabSignInFsBtn.setAttribute('aria-selected', 'true');
     }
-    if (DOM.addTaskBtn) DOM.addTaskBtn.disabled = true;
+    if (DOM.tabRegisterFsBtn) {
+      DOM.tabRegisterFsBtn.classList.remove('active');
+      DOM.tabRegisterFsBtn.setAttribute('aria-selected', 'false');
+    }
+    if (DOM.signInFsPanel) DOM.signInFsPanel.classList.remove('hidden');
+    if (DOM.registerFsPanel) DOM.registerFsPanel.classList.add('hidden');
+    if (DOM.loginFsUsername) setTimeout(() => DOM.loginFsUsername.focus(), 60);
+  } else {
+    if (DOM.tabRegisterFsBtn) {
+      DOM.tabRegisterFsBtn.classList.add('active');
+      DOM.tabRegisterFsBtn.setAttribute('aria-selected', 'true');
+    }
+    if (DOM.tabSignInFsBtn) {
+      DOM.tabSignInFsBtn.classList.remove('active');
+      DOM.tabSignInFsBtn.setAttribute('aria-selected', 'false');
+    }
+    if (DOM.registerFsPanel) DOM.registerFsPanel.classList.remove('hidden');
+    if (DOM.signInFsPanel) DOM.signInFsPanel.classList.add('hidden');
+    if (DOM.registerFsUsername) setTimeout(() => DOM.registerFsUsername.focus(), 60);
+  }
+}
+
+/**
+ * Displays error message in fullscreen auth alert container.
+ * @param {string} message - Error explanation
+ */
+function showFullscreenAuthError(message) {
+  if (DOM.authFsErrorAlert && DOM.authFsErrorText) {
+    DOM.authFsErrorText.textContent = message;
+    DOM.authFsErrorAlert.classList.remove('hidden');
+  }
+}
+
+/**
+ * Clears fullscreen error banner.
+ */
+function clearFullscreenAuthError() {
+  if (DOM.authFsErrorAlert && DOM.authFsErrorText) {
+    DOM.authFsErrorText.textContent = '';
+    DOM.authFsErrorAlert.classList.add('hidden');
+  }
+}
+
+/**
+ * Handles submission of fullscreen Sign In form.
+ * @param {Event} e - Form submit event
+ */
+async function handleFullscreenLogin(e) {
+  e.preventDefault();
+  clearFullscreenAuthError();
+
+  const username = DOM.loginFsUsername ? DOM.loginFsUsername.value.trim() : '';
+  const password = DOM.loginFsPassword ? DOM.loginFsPassword.value : '';
+
+  if (!username || !password) {
+    showFullscreenAuthError('Username and password are required.');
+    return;
+  }
+
+  try {
+    if (DOM.submitLoginFsBtn) {
+      DOM.submitLoginFsBtn.disabled = true;
+      DOM.submitLoginFsBtn.innerHTML = `<span>Signing In...</span>`;
+    }
+
+    const response = await axios.post(`${API}/auth/login`, {
+      username,
+      password
+    });
+
+    const { token, user } = response.data;
+    if (!token || !user) {
+      throw new Error('Invalid response structure received from authentication server.');
+    }
+
+    localStorage.setItem('tm_token', token);
+    localStorage.setItem('tm_user', JSON.stringify(user));
+    state.currentUser = user;
+
+    showToast(`Welcome back, ${user.username}!`, 'success');
+    updateAuthUI();
+    await loadTasks();
+  } catch (error) {
+    console.error('[Auth] Login error:', error);
+    const msg = error.response?.data?.message || error.message || 'Invalid username or password.';
+    showFullscreenAuthError(msg);
+  } finally {
+    if (DOM.submitLoginFsBtn) {
+      DOM.submitLoginFsBtn.disabled = false;
+      DOM.submitLoginFsBtn.innerHTML = `<span>Sign In</span>`;
+    }
+  }
+}
+
+/**
+ * Handles submission of fullscreen Register form.
+ * @param {Event} e - Form submit event
+ */
+async function handleFullscreenRegister(e) {
+  e.preventDefault();
+  clearFullscreenAuthError();
+
+  const username = DOM.registerFsUsername ? DOM.registerFsUsername.value.trim() : '';
+  const email = DOM.registerFsEmail ? DOM.registerFsEmail.value.trim() : '';
+  const password = DOM.registerFsPassword ? DOM.registerFsPassword.value : '';
+  const confirmPassword = DOM.registerFsConfirmPassword ? DOM.registerFsConfirmPassword.value : '';
+
+  if (!username || username.length < 2) {
+    showFullscreenAuthError('Username must be at least 2 characters.');
+    if (DOM.registerFsUsername) DOM.registerFsUsername.focus();
+    return;
+  }
+
+  if (!password || password.length < 6) {
+    showFullscreenAuthError('Password must be at least 6 characters.');
+    if (DOM.registerFsPassword) DOM.registerFsPassword.focus();
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    showFullscreenAuthError('Passwords do not match. Please verify.');
+    if (DOM.registerFsConfirmPassword) DOM.registerFsConfirmPassword.focus();
+    return;
+  }
+
+  try {
+    if (DOM.submitRegisterFsBtn) {
+      DOM.submitRegisterFsBtn.disabled = true;
+      DOM.submitRegisterFsBtn.innerHTML = `<span>Creating Account...</span>`;
+    }
+
+    const payload = { username, password };
+    if (email) payload.email = email;
+
+    const response = await axios.post(`${API}/auth/register`, payload);
+    const { token, user } = response.data;
+
+    if (!token || !user) {
+      throw new Error('Invalid response structure received from registration server.');
+    }
+
+    localStorage.setItem('tm_token', token);
+    localStorage.setItem('tm_user', JSON.stringify(user));
+    state.currentUser = user;
+
+    showToast(`Account created! Welcome, ${user.username}!`, 'success');
+    updateAuthUI();
+    await loadTasks();
+  } catch (error) {
+    console.error('[Auth] Registration error:', error);
+    const msg = error.response?.data?.message || error.message || 'Registration failed.';
+    showFullscreenAuthError(msg);
+  } finally {
+    if (DOM.submitRegisterFsBtn) {
+      DOM.submitRegisterFsBtn.disabled = false;
+      DOM.submitRegisterFsBtn.innerHTML = `<span>Create Account</span>`;
+    }
   }
 }
 
@@ -896,32 +1101,75 @@ function initEventListeners() {
   // Prompt sign in if guest clicks on task form
   DOM.taskForm.addEventListener('click', () => {
     if (!state.currentUser) {
-      openAuthModal('signin');
+      if (DOM.authFullscreenView) {
+        switchFullscreenAuthTab('signin');
+      } else {
+        openAuthModal('signin');
+      }
     }
   });
 
   // 2. Header Authentication Controls
-  DOM.openAuthModalBtn.addEventListener('click', () => openAuthModal('signin'));
-  DOM.signOutBtn.addEventListener('click', signOut);
+  if (DOM.openAuthModalBtn) {
+    DOM.openAuthModalBtn.addEventListener('click', () => {
+      if (DOM.authFullscreenView) switchFullscreenAuthTab('signin');
+      else openAuthModal('signin');
+    });
+  }
+  if (DOM.signOutBtn) DOM.signOutBtn.addEventListener('click', signOut);
+
+  // Fullscreen Authentication Controls
+  if (DOM.tabSignInFsBtn) DOM.tabSignInFsBtn.addEventListener('click', () => switchFullscreenAuthTab('signin'));
+  if (DOM.tabRegisterFsBtn) DOM.tabRegisterFsBtn.addEventListener('click', () => switchFullscreenAuthTab('register'));
+  if (DOM.signInFsForm) DOM.signInFsForm.addEventListener('submit', handleFullscreenLogin);
+  if (DOM.registerFsForm) DOM.registerFsForm.addEventListener('submit', handleFullscreenRegister);
+
+  // Quick Demo Credential Pills
+  if (DOM.demoUserPill) {
+    DOM.demoUserPill.addEventListener('click', () => {
+      switchFullscreenAuthTab('signin');
+      if (DOM.loginFsUsername) DOM.loginFsUsername.value = 'alex_dev';
+      if (DOM.loginFsPassword) {
+        DOM.loginFsPassword.value = 'Password123!';
+        DOM.loginFsPassword.focus();
+      }
+    });
+  }
+
+  if (DOM.demoAdminPill) {
+    DOM.demoAdminPill.addEventListener('click', () => {
+      switchFullscreenAuthTab('signin');
+      if (DOM.loginFsUsername) DOM.loginFsUsername.value = 'admin';
+      if (DOM.loginFsPassword) {
+        DOM.loginFsPassword.value = 'AdminPass123!';
+        DOM.loginFsPassword.focus();
+      }
+    });
+  }
 
   // 3. Guest State Sign In Button
   if (DOM.guestSignInBtn) {
-    DOM.guestSignInBtn.addEventListener('click', () => openAuthModal('signin'));
+    DOM.guestSignInBtn.addEventListener('click', () => {
+      if (DOM.authFullscreenView) switchFullscreenAuthTab('signin');
+      else openAuthModal('signin');
+    });
   }
 
   // 4. Auth Modal Controls
-  DOM.closeAuthModalBtn.addEventListener('click', closeAuthModal);
-  DOM.authModal.addEventListener('click', (e) => {
-    if (e.target === DOM.authModal) closeAuthModal();
-  });
+  if (DOM.closeAuthModalBtn) DOM.closeAuthModalBtn.addEventListener('click', closeAuthModal);
+  if (DOM.authModal) {
+    DOM.authModal.addEventListener('click', (e) => {
+      if (e.target === DOM.authModal) closeAuthModal();
+    });
+  }
 
   // Tab switching in Auth Modal
-  DOM.tabSignInBtn.addEventListener('click', () => switchAuthTab('signin'));
-  DOM.tabRegisterBtn.addEventListener('click', () => switchAuthTab('register'));
+  if (DOM.tabSignInBtn) DOM.tabSignInBtn.addEventListener('click', () => switchAuthTab('signin'));
+  if (DOM.tabRegisterBtn) DOM.tabRegisterBtn.addEventListener('click', () => switchAuthTab('register'));
 
   // Auth Form Submissions
-  DOM.signInForm.addEventListener('submit', handleLogin);
-  DOM.registerForm.addEventListener('submit', handleRegister);
+  if (DOM.signInForm) DOM.signInForm.addEventListener('submit', handleLogin);
+  if (DOM.registerForm) DOM.registerForm.addEventListener('submit', handleRegister);
 
   // 5. Status Filter Tabs (All / Active / Completed)
   DOM.filterTabs.forEach((tab) => {
@@ -992,7 +1240,18 @@ function initEventListeners() {
  */
 document.addEventListener('DOMContentLoaded', async () => {
   initEventListeners();
-  // 1. Verify active token or show guest state
+
+  // If redirected with ?auth=admin query, select signin tab and pre-fill admin username
+  if (window.location.search.includes('auth=admin')) {
+    switchFullscreenAuthTab('signin');
+    if (DOM.loginFsUsername) DOM.loginFsUsername.value = 'admin';
+    if (DOM.loginFsPassword) {
+      DOM.loginFsPassword.value = 'AdminPass123!';
+      DOM.loginFsPassword.focus();
+    }
+  }
+
+  // 1. Verify active token or show fullscreen auth state
   const isAuthenticated = await checkAuthSession();
   // 2. If authenticated, fetch and render user's tasks
   if (isAuthenticated) {

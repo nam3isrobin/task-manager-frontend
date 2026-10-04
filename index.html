@@ -16,8 +16,165 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- ==================================================================== -->
+  <!-- Dedicated Fullscreen Authentication View (Unauthenticated State)    -->
+  <!-- ==================================================================== -->
+  <div id="authFullscreenView" class="auth-fullscreen-container" role="region" aria-label="TaskMaster Pro Authentication">
+    <div class="auth-card-fullscreen">
+      <!-- Brand Header -->
+      <div class="auth-brand-fullscreen">
+        <div class="auth-brand-logo" aria-hidden="true">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="auth-brand-text">
+          <h1 class="auth-brand-title">TaskMaster Pro</h1>
+          <p class="auth-brand-subtitle">Streamlined Task &amp; Workflow Manager</p>
+        </div>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="auth-fullscreen-tabs" role="tablist" aria-label="Authentication Options">
+        <button type="button" id="tabSignInFsBtn" class="auth-tab-btn active" role="tab" aria-selected="true" aria-controls="signInFsPanel">
+          Sign In
+        </button>
+        <button type="button" id="tabRegisterFsBtn" class="auth-tab-btn" role="tab" aria-selected="false" aria-controls="registerFsPanel">
+          Create Account
+        </button>
+      </div>
+
+      <!-- Auth Error Notification Area -->
+      <div id="authFsErrorAlert" class="auth-error-alert hidden" role="alert" aria-live="assertive">
+        <svg class="error-alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span id="authFsErrorText" class="error-alert-text"></span>
+      </div>
+
+      <!-- Tab 1: Sign In Panel -->
+      <div id="signInFsPanel" class="auth-panel" role="tabpanel" aria-labelledby="tabSignInFsBtn">
+        <form id="signInFsForm" class="auth-form" autocomplete="on">
+          <div class="form-field">
+            <label for="loginFsUsername" class="form-label">Username <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="loginFsUsername" 
+              class="form-input" 
+              placeholder="e.g. alex_dev or admin" 
+              required 
+              autocomplete="username"
+              aria-label="Login Username"
+            >
+          </div>
+
+          <div class="form-field">
+            <label for="loginFsPassword" class="form-label">Password <span class="required">*</span></label>
+            <input 
+              type="password" 
+              id="loginFsPassword" 
+              class="form-input" 
+              placeholder="Enter your password" 
+              required 
+              autocomplete="current-password"
+              aria-label="Login Password"
+            >
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" id="submitLoginFsBtn" class="btn btn-primary btn-full-width">
+              <span>Sign In</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tab 2: Create Account Panel -->
+      <div id="registerFsPanel" class="auth-panel hidden" role="tabpanel" aria-labelledby="tabRegisterFsBtn">
+        <form id="registerFsForm" class="auth-form" autocomplete="off">
+          <div class="form-field">
+            <label for="registerFsUsername" class="form-label">Username <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="registerFsUsername" 
+              class="form-input" 
+              placeholder="e.g. alex_dev" 
+              required 
+              minlength="2" 
+              maxlength="50" 
+              autocomplete="username"
+              aria-label="Register Username"
+            >
+            <span class="field-hint">Must be 2 to 50 characters, unique across all users.</span>
+          </div>
+
+          <div class="form-field">
+            <label for="registerFsEmail" class="form-label">Email Address (Optional)</label>
+            <input 
+              type="email" 
+              id="registerFsEmail" 
+              class="form-input" 
+              placeholder="e.g. alex@example.com"
+              autocomplete="email"
+              aria-label="Register Email Address"
+            >
+          </div>
+
+          <div class="form-field">
+            <label for="registerFsPassword" class="form-label">Password <span class="required">*</span></label>
+            <input 
+              type="password" 
+              id="registerFsPassword" 
+              class="form-input" 
+              placeholder="At least 6 characters" 
+              required 
+              minlength="6" 
+              autocomplete="new-password"
+              aria-label="Register Password"
+            >
+          </div>
+
+          <div class="form-field">
+            <label for="registerFsConfirmPassword" class="form-label">Confirm Password <span class="required">*</span></label>
+            <input 
+              type="password" 
+              id="registerFsConfirmPassword" 
+              class="form-input" 
+              placeholder="Re-enter your password" 
+              required 
+              minlength="6" 
+              autocomplete="new-password"
+              aria-label="Confirm Password"
+            >
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" id="submitRegisterFsBtn" class="btn btn-primary btn-full-width">
+              <span>Create Account</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Quick Demo Credentials Hint -->
+      <div class="auth-demo-hint">
+        <span class="demo-hint-title">Standard Demo Credentials:</span>
+        <div class="demo-credential-pills">
+          <button type="button" class="demo-pill" id="demoUserPill" title="Quick fill demo user">
+            <span class="demo-pill-role">User:</span> alex_dev
+          </button>
+          <button type="button" class="demo-pill" id="demoAdminPill" title="Quick fill root administrator">
+            <span class="demo-pill-role">Admin:</span> admin
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Root application wrapper with maximum width 720px -->
-  <div class="app-container">
+  <div class="app-container hidden" id="appDashboard">
     
     <!-- ==================================================================== -->
     <!-- Application Header & Authentication Bar                              -->
@@ -31,26 +188,20 @@
         </div>
         <div class="brand-text">
           <h1 class="brand-title">TaskMaster Pro</h1>
-          <p class="brand-subtitle">Streamlined Task & Workflow Manager</p>
+          <p class="brand-subtitle">Streamlined Task &amp; Workflow Manager</p>
         </div>
       </div>
 
       <!-- User Authentication Controls -->
       <div class="auth-control-bar" id="authControlBar" role="region" aria-label="User Account Controls">
-        <!-- Unauthenticated Guest View: Sign In / Register Button -->
-        <div id="authGuestView" class="auth-guest-view">
-          <button type="button" id="openAuthModalBtn" class="btn btn-primary btn-auth-trigger" aria-label="Sign In or Register">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-              <polyline points="10 17 15 12 10 7"/>
-              <line x1="15" y1="12" x2="3" y2="12"/>
-            </svg>
-            <span>Sign In</span>
-          </button>
-        </div>
-
-        <!-- Authenticated User View: Profile Badge + Sign Out Button -->
+        <!-- Authenticated User View: Profile Badge + Admin Portal Link + Sign Out Button -->
         <div id="authUserView" class="auth-user-view hidden">
+          <a href="/admin" id="adminPortalBtn" class="btn btn-secondary btn-admin hidden" title="Access Administrator Portal" aria-label="Admin Portal">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>Admin Portal</span>
+          </a>
           <div class="user-badge" id="userProfileBadge" title="Current authenticated account">
             <div class="user-avatar" id="userAvatarText" aria-hidden="true">U</div>
             <span class="user-handle" id="userHandle">@user</span>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Character encoding and responsive viewport configuration -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Dark theme chrome synchronization invariant -->
+  <meta name="theme-color" content="#0d1117">
+  <title>TaskMaster Pro | Admin Command Center</title>
+
+  <!-- Typography: Inter & Outfit from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Admin Dedicated Stylesheet (Pure Vanilla CSS) -->
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <!-- ==================================================================== -->
+  <!-- Access Denied (403) Security Guard View                              -->
+  <!-- ==================================================================== -->
+  <div id="accessDeniedView" class="access-denied-container hidden" role="region" aria-label="Access Denied Security Guard">
+    <div class="access-denied-card">
+      <div class="access-denied-icon" aria-hidden="true">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <div class="access-denied-badge">403 Forbidden</div>
+      <h1 class="access-denied-title">Administrator Privileges Required</h1>
+      <p id="accessDeniedMessage" class="access-denied-desc">
+        You do not possess root administrator privileges to access this control surface. Please authenticate with an authorized administrative account.
+      </p>
+      <div class="access-denied-actions">
+        <button type="button" id="signInAsAdminBtn" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          <span>Sign In as Administrator</span>
+        </button>
+        <a href="/" class="btn btn-outline">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"/>
+            <polyline points="12 19 5 12 12 5"/>
+          </svg>
+          <span>Return to Tasks App</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- Main Admin Portal Application Container                              -->
+  <!-- ==================================================================== -->
+  <div id="adminApp" class="admin-app-container hidden">
+
+    <!-- Top Admin Navigation Bar -->
+    <header class="admin-navbar" role="banner">
+      <div class="admin-nav-left">
+        <div class="admin-brand-logo" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div class="admin-brand-text">
+          <h1 class="admin-brand-title">TaskMaster Pro Admin</h1>
+          <span class="admin-status-badge">Root Administrator</span>
+        </div>
+      </div>
+
+      <div class="admin-nav-right">
+        <div class="admin-user-pill" id="adminUserPill" title="Authenticated root administrator profile">
+          <span class="admin-user-avatar" id="adminAvatarText">A</span>
+          <span class="admin-user-name" id="adminUserName">@admin</span>
+        </div>
+        <a href="/" class="btn btn-outline" id="backToTasksBtn" title="Return to public task workspace">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"/>
+            <polyline points="12 19 5 12 12 5"/>
+          </svg>
+          <span>Back to Tasks App</span>
+        </a>
+        <button type="button" id="adminSignOutBtn" class="btn btn-secondary" title="Sign out of administrative session" aria-label="Sign Out">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="admin-main-content">
+
+      <!-- ================================================================ -->
+      <!-- Section 1: System Metrics Grid (4 KPI Cards)                     -->
+      <!-- ================================================================ -->
+      <section class="admin-section" aria-labelledby="metricsHeading">
+        <div class="section-header">
+          <div>
+            <h2 id="metricsHeading" class="section-title">System Metrics &amp; Telemetry</h2>
+            <p class="section-subtitle">Real-time infrastructure health, database connection state, and global usage analytics.</p>
+          </div>
+          <button type="button" id="refreshMetricsBtn" class="btn btn-sm btn-outline" title="Refresh Telemetry Metrics">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            <span>Refresh</span>
+          </button>
+        </div>
+
+        <div class="metrics-grid">
+          <!-- Card 1: Total Registered Users -->
+          <div class="metric-card">
+            <div class="metric-icon-wrap icon-users">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
+            <div class="metric-body">
+              <span class="metric-label">Total Registered Users</span>
+              <span class="metric-value" id="metricTotalUsers">--</span>
+              <span class="metric-subtext">Active accounts across system</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Total Tasks Created -->
+          <div class="metric-card">
+            <div class="metric-icon-wrap icon-tasks">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+            </div>
+            <div class="metric-body">
+              <span class="metric-label">Total Tasks Created</span>
+              <span class="metric-value" id="metricTotalTasks">--</span>
+              <span class="metric-subtext">Cumulative task inventory</span>
+            </div>
+          </div>
+
+          <!-- Card 3: Active vs Completed & Completion Rate % -->
+          <div class="metric-card">
+            <div class="metric-icon-wrap icon-completion">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <div class="metric-body">
+              <span class="metric-label">Task Completion Rate</span>
+              <div class="metric-value-row">
+                <span class="metric-value" id="metricCompletionRate">0%</span>
+                <span class="metric-ratio" id="metricTaskRatio">(0 completed / 0 active)</span>
+              </div>
+              <div class="metric-progress-track">
+                <div class="metric-progress-fill" id="metricProgressFill" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 4: Database & Server Uptime -->
+          <div class="metric-card">
+            <div class="metric-icon-wrap icon-uptime">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+              </svg>
+            </div>
+            <div class="metric-body">
+              <span class="metric-label">Database &amp; Server Health</span>
+              <div class="uptime-status-row">
+                <span class="status-pulse-dot" id="dbPulseDot"></span>
+                <span class="uptime-text" id="metricDbStatus">Database: Connecting...</span>
+              </div>
+              <span class="metric-subtext" id="metricUptimeText">Server Uptime: Calculating...</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- Section 2: User Directory & Management Table                     -->
+      <!-- ================================================================ -->
+      <section class="admin-section" aria-labelledby="usersHeading">
+        <div class="section-header">
+          <div>
+            <h2 id="usersHeading" class="section-title">User Directory &amp; Tenancy Management</h2>
+            <p class="section-subtitle">Inspect registered user profiles, role assignments, and cumulative task load.</p>
+          </div>
+          <div class="section-actions">
+            <input type="text" id="userSearchInput" class="form-input search-input" placeholder="Search username or email..." aria-label="Search users">
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="admin-table" id="usersTable">
+              <thead>
+                <tr>
+                  <th scope="col">Username</th>
+                  <th scope="col">Email Address</th>
+                  <th scope="col">Role</th>
+                  <th scope="col">Registered Date</th>
+                  <th scope="col">Tasks Created</th>
+                  <th scope="col" class="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr>
+                  <td colspan="6" class="table-empty-cell">Loading user directory...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- Section 3: Global Task Explorer Table                            -->
+      <!-- ================================================================ -->
+      <section class="admin-section" aria-labelledby="tasksHeading">
+        <div class="section-header">
+          <div>
+            <h2 id="tasksHeading" class="section-title">Global Task Explorer</h2>
+            <p class="section-subtitle">Real-time cross-tenant task inspection with live category and completion status filters.</p>
+          </div>
+        </div>
+
+        <!-- Task Explorer Filter Toolbar -->
+        <div class="admin-filter-toolbar">
+          <div class="toolbar-left">
+            <!-- Status Tabs -->
+            <div class="filter-tabs" role="tablist" aria-label="Filter tasks by completion status">
+              <button type="button" class="tab-btn active" data-task-status="all" role="tab" aria-selected="true">All</button>
+              <button type="button" class="tab-btn" data-task-status="active" role="tab" aria-selected="false">Active</button>
+              <button type="button" class="tab-btn" data-task-status="completed" role="tab" aria-selected="false">Completed</button>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="select-wrapper">
+              <select id="adminCategoryFilter" class="form-select filter-select" aria-label="Filter tasks by category">
+                <option value="all">All Categories</option>
+                <option value="Work">Work</option>
+                <option value="Personal">Personal</option>
+                <option value="Urgent">Urgent</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="toolbar-right">
+            <input type="text" id="taskSearchInput" class="form-input search-input" placeholder="Search title or owner..." aria-label="Search tasks">
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="admin-table" id="tasksTable">
+              <thead>
+                <tr>
+                  <th scope="col">Title</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Owner</th>
+                  <th scope="col">Created Date</th>
+                  <th scope="col" class="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tasksTableBody">
+                <tr>
+                  <td colspan="6" class="table-empty-cell">Loading global task explorer...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Admin Footer -->
+    <footer class="admin-footer">
+      <p>TaskMaster Pro &bull; Root Administrator Command Surface &bull; High Availability Cluster</p>
+    </footer>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- Delete Confirmation Modal Dialog                                     -->
+  <!-- ==================================================================== -->
+  <div id="confirmModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
+    <div class="modal-card confirm-modal-card">
+      <div class="modal-header">
+        <h3 id="confirmModalTitle" class="modal-title">Confirm Administrative Action</h3>
+        <button type="button" id="closeConfirmModalBtn" class="btn-close" aria-label="Close Confirmation Modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmModalMessage" class="confirm-message">Are you sure you want to proceed with this administrative deletion?</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="cancelConfirmBtn" class="btn btn-secondary">Cancel</button>
+        <button type="button" id="executeConfirmBtn" class="btn btn-danger">Confirm Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Feedback Container -->
+  <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Axios Library via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <!-- Admin Application Client Logic -->
+  <script src="admin.js"></script>
+</body>
+</html>

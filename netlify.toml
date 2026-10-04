@@ -10,7 +10,14 @@
   # Directory containing index.html, style.css, script.js, and static assets
   publish = "."
 
-# Proxy rules routing API requests to backend host (fallback to localhost:3000 in dev)
+# Standalone Admin Portal Rewrite
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+  force = true
+
+# Proxy rules routing API requests to backend host (Render live backend)
 [[redirects]]
   from = "/tasks/*"
   to = "https://task-manager-backend-km6q.onrender.com/tasks/:splat"
@@ -32,6 +39,18 @@
 [[redirects]]
   from = "/users"
   to = "https://task-manager-backend-km6q.onrender.com/users"
+  status = 200
+  force = false
+
+[[redirects]]
+  from = "/auth/*"
+  to = "https://task-manager-backend-km6q.onrender.com/auth/:splat"
+  status = 200
+  force = false
+
+[[redirects]]
+  from = "/auth"
+  to = "https://task-manager-backend-km6q.onrender.com/auth"
   status = 200
   force = false
 

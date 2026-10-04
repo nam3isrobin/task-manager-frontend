@@ -4,21 +4,23 @@
  * ==============================================================================
  * Production-ready JavaScript client utilizing Axios for RESTful API orchestration.
  *
- * Core Features & Assignments Supported:
- * - Core: CRUD actions for Tasks (create, read, toggle status, delete).
- * - Assignment 1: Edit task title (via interactive modal and PUT /tasks/:id).
- * - Assignment 2: Category taxonomy ('Work', 'Personal', 'Urgent') with visual badges
- *   and real-time category filtering.
- * - Assignment 3: Chronological sorting (Newest first / Oldest first toggle) via API
- *   query parameters and client-side synchronization.
- * - Assignment 4: Multiple users (user switcher dropdown in header + user creation modal
- *   invoking POST /users and relational filtering via GET /tasks?userId=...).
+ * Core Features & Capabilities:
+ * - Authentication System:
+ *   * Register (POST /auth/register) -> JWT token + user profile.
+ *   * Login (POST /auth/login) -> JWT token + user profile.
+ *   * Verify Session (GET /auth/me) -> Session validation on startup.
+ *   * Axios interceptor for automatic Bearer token injection.
+ *   * 401 session expiration handling with automatic logout and re-auth prompt.
+ * - Core CRUD: Tasks management with user tenancy.
+ * - Assignment 1: Edit task title & properties (PUT /tasks/:id).
+ * - Assignment 2: Strict category taxonomy ('Work', 'Personal', 'Urgent').
+ * - Assignment 3: Chronological sorting (Newest first / Oldest first).
+ * - Multi-Tenant Security: Private task ownership per authenticated user.
  *
  * Invariants & Best Practices:
- * - Configurable API endpoint supporting local Express development and remote deployment.
- * - Robust input sanitization preventing Cross-Site Scripting (XSS).
- * - Keyboard shortcuts (Enter to submit, Escape to close modals).
- * - Accessible state management and instant visual toast notifications.
+ * - Pure Standard Vanilla CSS integration (zero Tailwind shortcuts).
+ * - Dark theme canvas and overscroll lock (#0d1117).
+ * - Comprehensive inline comments and defensive validation guards.
  * ==============================================================================
  */
 
@@ -28,32 +30,79 @@
 
 /**
  * Dynamically resolves the API base URL.
- * Automatically targets port 3000 if served via a local web server or file host,
- * while respecting origin host in production deployments.
+ * Automatically targets origin host or falls back to port 3000 for local development,
+ * and routes to the live Render backend when hosted on static platforms (e.g. Netlify).
  */
 const LIVE_BACKEND_URL = 'https://task-manager-backend-km6q.onrender.com';
 
 const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? (window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3001')
+  ? (window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000')
   : LIVE_BACKEND_URL;
 
 // ==============================================================================
-// 2. Application State Management
+// 2. Axios Request & Response Interceptors (Token & Auth Lifecycle)
+// ==============================================================================
+
+/**
+ * Request Interceptor: Automatically injects JWT Bearer token from localStorage
+ * into every outgoing Axios HTTP request header.
+ */
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('tm_token');
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+/**
+ * Response Interceptor: Listens for HTTP 401 Unauthorized responses.
+ * If a token was previously held and a protected request fails with 401,
+ * clears credentials, updates UI to guest state, and prompts for re-authentication.
+ */
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Avoid triggering session-expired toast if user entered wrong password during login
+      const isAuthAttempt = error.config && error.config.url && (
+        error.config.url.includes('/auth/login') ||
+        error.config.url.includes('/auth/register')
+      );
+      const existingToken = localStorage.getItem('tm_token');
+
+      if (existingToken && !isAuthAttempt) {
+        localStorage.removeItem('tm_token');
+        localStorage.removeItem('tm_user');
+        state.currentUser = null;
+        updateAuthUI();
+        showToast('Session expired. Please log in again.', 'error');
+        openAuthModal('signin');
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// ==============================================================================
+// 3. Application State Management
 // ==============================================================================
 
 const state = {
-  // Active user filter ID ('': all users, or specific MongoDB ObjectId)
-  currentUserId: '',
+  // Authenticated user entity: { id, username, email } or null
+  currentUser: null,
   // Task completion filter: 'all' | 'active' | 'completed'
   filterStatus: 'all',
-  // Category filter: 'all' | 'Work' | 'Personal' | 'Urgent'
+  // Category taxonomy filter: 'all' | 'Work' | 'Personal' | 'Urgent'
   filterCategory: 'all',
-  // Sort order: 'desc' (Newest first) | 'asc' (Oldest first)
+  // Chronological sort order: 'desc' (Newest first) | 'asc' (Oldest first)
   sortOrder: 'desc',
-  // In-memory cache of retrieved tasks
+  // In-memory cache of retrieved tasks for current user
   tasksCache: [],
-  // In-memory cache of registered users
-  usersCache: [],
   // Task currently undergoing edit in modal
   editingTaskId: null,
   // Network activity flag
@@ -61,28 +110,52 @@ const state = {
 };
 
 // ==============================================================================
-// 3. DOM Elements Cache
+// 4. DOM Elements Cache
 // ==============================================================================
 
 const DOM = {
-  // User Management
-  userSelect: document.getElementById('userSelect'),
-  openUserModalBtn: document.getElementById('openUserModalBtn'),
-  userModal: document.getElementById('userModal'),
-  closeUserModalBtn: document.getElementById('closeUserModalBtn'),
-  cancelUserBtn: document.getElementById('cancelUserBtn'),
-  createUserForm: document.getElementById('createUserForm'),
-  newUsername: document.getElementById('newUsername'),
-  newUserEmail: document.getElementById('newUserEmail'),
+  // Authentication Bar & Header Controls
+  authControlBar: document.getElementById('authControlBar'),
+  authGuestView: document.getElementById('authGuestView'),
+  authUserView: document.getElementById('authUserView'),
+  openAuthModalBtn: document.getElementById('openAuthModalBtn'),
+  userProfileBadge: document.getElementById('userProfileBadge'),
+  userAvatarText: document.getElementById('userAvatarText'),
+  userHandle: document.getElementById('userHandle'),
+  signOutBtn: document.getElementById('signOutBtn'),
 
-  // Task Creation
+  // Auth Modal Dialog & Tab Switcher
+  authModal: document.getElementById('authModal'),
+  authModalTitle: document.getElementById('authModalTitle'),
+  closeAuthModalBtn: document.getElementById('closeAuthModalBtn'),
+  tabSignInBtn: document.getElementById('tabSignInBtn'),
+  tabRegisterBtn: document.getElementById('tabRegisterBtn'),
+  authErrorAlert: document.getElementById('authErrorAlert'),
+  authErrorText: document.getElementById('authErrorText'),
+  signInFormPanel: document.getElementById('signInFormPanel'),
+  registerFormPanel: document.getElementById('registerFormPanel'),
+
+  // Sign In Form Elements
+  signInForm: document.getElementById('signInForm'),
+  loginUsername: document.getElementById('loginUsername'),
+  loginPassword: document.getElementById('loginPassword'),
+  submitLoginBtn: document.getElementById('submitLoginBtn'),
+
+  // Register Form Elements
+  registerForm: document.getElementById('registerForm'),
+  registerUsername: document.getElementById('registerUsername'),
+  registerEmail: document.getElementById('registerEmail'),
+  registerPassword: document.getElementById('registerPassword'),
+  registerConfirmPassword: document.getElementById('registerConfirmPassword'),
+  submitRegisterBtn: document.getElementById('submitRegisterBtn'),
+
+  // Task Creation Form
   taskForm: document.getElementById('taskForm'),
   taskTitleInput: document.getElementById('taskTitleInput'),
   taskCategorySelect: document.getElementById('taskCategorySelect'),
-  taskUserSelect: document.getElementById('taskUserSelect'),
   addTaskBtn: document.getElementById('addTaskBtn'),
 
-  // Filtering & Sorting
+  // Filtering & Sorting Toolbar
   filterTabs: document.querySelectorAll('.tab-btn'),
   categoryFilter: document.getElementById('categoryFilter'),
   sortToggleBtn: document.getElementById('sortToggleBtn'),
@@ -90,16 +163,18 @@ const DOM = {
   sortAscIcon: document.getElementById('sortAscIcon'),
   sortLabel: document.getElementById('sortLabel'),
 
-  // Status Summary
+  // Status Summary & Progress
   statusCounter: document.getElementById('statusCounter'),
   activeFilterBadge: document.getElementById('activeFilterBadge'),
   progressBar: document.getElementById('progressBar'),
 
-  // Task List & Empty State
+  // Task List, Empty State & Guest State Containers
   taskList: document.getElementById('taskList'),
   emptyState: document.getElementById('emptyState'),
+  guestState: document.getElementById('guestState'),
+  guestSignInBtn: document.getElementById('guestSignInBtn'),
 
-  // Edit Task Modal
+  // Edit Task Modal Dialog
   editModal: document.getElementById('editModal'),
   closeEditModalBtn: document.getElementById('closeEditModalBtn'),
   cancelEditBtn: document.getElementById('cancelEditBtn'),
@@ -107,15 +182,14 @@ const DOM = {
   editTaskId: document.getElementById('editTaskId'),
   editTaskTitle: document.getElementById('editTaskTitle'),
   editTaskCategory: document.getElementById('editTaskCategory'),
-  editTaskUser: document.getElementById('editTaskUser'),
   editTaskCompleted: document.getElementById('editTaskCompleted'),
 
-  // Toasts
+  // Toast Container
   toastContainer: document.getElementById('toastContainer')
 };
 
 // ==============================================================================
-// 4. Utility Functions
+// 5. Utility Functions & Sanitization
 // ==============================================================================
 
 /**
@@ -136,7 +210,7 @@ function escapeHtml(str) {
 /**
  * Formats ISO date timestamp into a human-friendly string.
  * @param {string|Date} dateInput - ISO timestamp string
- * @returns {string} Formatted date (e.g. "Oct 3, 2026, 3:30 AM")
+ * @returns {string} Formatted date (e.g. "Oct 4, 2026, 3:30 PM")
  */
 function formatDate(dateInput) {
   if (!dateInput) return '';
@@ -189,127 +263,311 @@ function showToast(message, type = 'info') {
 }
 
 // ==============================================================================
-// 5. User Management Services (Assignment 4)
+// 6. Authentication Services & UI State Synchronization
 // ==============================================================================
 
 /**
- * Fetches all registered users from the backend (GET /users).
- * Populates all user select dropdowns across the application.
+ * Validates existing session on initial application load.
+ * Invokes GET /auth/me with Bearer token.
+ * @returns {Promise<boolean>} True if session is valid, false otherwise
  */
-async function loadUsers() {
+async function checkAuthSession() {
+  const token = localStorage.getItem('tm_token');
+  if (!token) {
+    state.currentUser = null;
+    updateAuthUI();
+    return false;
+  }
+
   try {
-    const response = await axios.get(`${API}/users`);
-    state.usersCache = Array.isArray(response.data) ? response.data : [];
-    populateUserDropdowns();
+    const response = await axios.get(`${API}/auth/me`);
+    const user = response.data.user || response.data;
+    state.currentUser = user;
+    localStorage.setItem('tm_user', JSON.stringify(user));
+    updateAuthUI();
+    return true;
   } catch (error) {
-    console.error('[API] Failed to fetch users:', error);
-    // Don't interrupt flow if users endpoint is unavailable, but notify
-    showToast('Could not load user profiles from server', 'error');
+    console.warn('[Auth] Session validation failed:', error.message);
+    localStorage.removeItem('tm_token');
+    localStorage.removeItem('tm_user');
+    state.currentUser = null;
+    updateAuthUI();
+    return false;
   }
 }
 
 /**
- * Synchronizes users cache into HTML `<select>` elements.
+ * Updates header, status bar, and workspace based on authentication status.
  */
-function populateUserDropdowns() {
-  // 1. Header Active User Filter Dropdown
-  const currentSelected = state.currentUserId;
-  DOM.userSelect.innerHTML = `<option value="">All Users (Global)</option>`;
+function updateAuthUI() {
+  const isAuthenticated = Boolean(state.currentUser && localStorage.getItem('tm_token'));
 
-  // 2. Task Creation Form Assignee Dropdown
-  DOM.taskUserSelect.innerHTML = `<option value="">Unassigned (None)</option>`;
+  if (isAuthenticated) {
+    // Reveal authenticated user controls
+    if (DOM.authGuestView) DOM.authGuestView.classList.add('hidden');
+    if (DOM.authUserView) DOM.authUserView.classList.remove('hidden');
 
-  // 3. Task Edit Modal Assignee Dropdown
-  DOM.editTaskUser.innerHTML = `<option value="">Unassigned (None)</option>`;
+    const username = state.currentUser.username || 'user';
+    if (DOM.userHandle) DOM.userHandle.textContent = `@${username}`;
+    if (DOM.userAvatarText) DOM.userAvatarText.textContent = username.charAt(0).toUpperCase();
 
-  state.usersCache.forEach((user) => {
-    const userId = user._id || user.id;
-    const displayName = user.username + (user.email ? ` (${user.email})` : '');
+    // Enable task creation form inputs
+    if (DOM.taskTitleInput) {
+      DOM.taskTitleInput.disabled = false;
+      DOM.taskTitleInput.placeholder = 'What needs to be accomplished?';
+    }
+    if (DOM.addTaskBtn) DOM.addTaskBtn.disabled = false;
 
-    // Option for User Switcher
-    const optFilter = document.createElement('option');
-    optFilter.value = userId;
-    optFilter.textContent = displayName;
-    DOM.userSelect.appendChild(optFilter);
+    // Hide guest state placeholder
+    if (DOM.guestState) DOM.guestState.classList.add('hidden');
+  } else {
+    // Reveal unauthenticated guest controls
+    if (DOM.authGuestView) DOM.authGuestView.classList.remove('hidden');
+    if (DOM.authUserView) DOM.authUserView.classList.add('hidden');
 
-    // Option for Task Creation
-    const optCreate = document.createElement('option');
-    optCreate.value = userId;
-    optCreate.textContent = displayName;
-    DOM.taskUserSelect.appendChild(optCreate);
+    // Display guest state in task list viewport
+    if (DOM.taskList) DOM.taskList.innerHTML = '';
+    if (DOM.emptyState) DOM.emptyState.classList.add('hidden');
+    if (DOM.guestState) DOM.guestState.classList.remove('hidden');
 
-    // Option for Task Edit
-    const optEdit = document.createElement('option');
-    optEdit.value = userId;
-    optEdit.textContent = displayName;
-    DOM.editTaskUser.appendChild(optEdit);
-  });
+    // Display status bar onboarding prompt
+    if (DOM.statusCounter) {
+      DOM.statusCounter.textContent = 'Please sign in to view and manage your private tasks.';
+    }
+    if (DOM.progressBar) DOM.progressBar.style.width = '0%';
+    if (DOM.activeFilterBadge) DOM.activeFilterBadge.classList.add('hidden');
 
-  // Preserve previously selected user if still exists
-  DOM.userSelect.value = currentSelected;
-  if (currentSelected) {
-    DOM.taskUserSelect.value = currentSelected;
+    // Disable task creation form inputs
+    if (DOM.taskTitleInput) {
+      DOM.taskTitleInput.disabled = true;
+      DOM.taskTitleInput.placeholder = 'Sign in above to create and manage tasks...';
+    }
+    if (DOM.addTaskBtn) DOM.addTaskBtn.disabled = true;
   }
 }
 
 /**
- * Registers a new user profile via POST /users.
- * @param {string} username - User handle (required)
- * @param {string} email - User email (optional)
+ * Handles user login submission (POST /auth/login).
+ * @param {Event} e - Form submit event
  */
-async function createUser(username, email) {
+async function handleLogin(e) {
+  e.preventDefault();
+  clearAuthError();
+
+  const username = DOM.loginUsername.value.trim();
+  const password = DOM.loginPassword.value;
+
+  if (!username || !password) {
+    showAuthError('Username and password are required.');
+    return;
+  }
+
   try {
-    const payload = {
-      username: username.trim(),
-      email: email ? email.trim() : undefined
-    };
+    DOM.submitLoginBtn.disabled = true;
+    DOM.submitLoginBtn.innerHTML = `<span>Signing In...</span>`;
 
-    const response = await axios.post(`${API}/users`, payload);
-    const createdUser = response.data;
-    const createdId = createdUser._id || createdUser.id;
+    const response = await axios.post(`${API}/auth/login`, {
+      username,
+      password
+    });
 
-    showToast(`User profile "${createdUser.username}" created!`, 'success');
+    const { token, user } = response.data;
+    if (!token || !user) {
+      throw new Error('Invalid response structure received from authentication server.');
+    }
 
-    // Close user creation modal and reset form
-    closeUserModal();
-    DOM.createUserForm.reset();
+    localStorage.setItem('tm_token', token);
+    localStorage.setItem('tm_user', JSON.stringify(user));
+    state.currentUser = user;
 
-    // Reload users and auto-select newly created user
-    await loadUsers();
-    state.currentUserId = createdId;
-    DOM.userSelect.value = createdId;
-    DOM.taskUserSelect.value = createdId;
-
-    // Reload tasks filtered for this new user
+    showToast(`Welcome back, ${user.username}!`, 'success');
+    closeAuthModal();
+    updateAuthUI();
     await loadTasks();
   } catch (error) {
-    console.error('[API] Error creating user:', error);
-    const errorMsg = error.response?.data?.message || 'Failed to create user profile';
-    showToast(errorMsg, 'error');
+    console.error('[Auth] Login error:', error);
+    const msg = error.response?.data?.message || error.message || 'Invalid username or password.';
+    showAuthError(msg);
+  } finally {
+    DOM.submitLoginBtn.disabled = false;
+    DOM.submitLoginBtn.innerHTML = `<span>Sign In</span>`;
+  }
+}
+
+/**
+ * Handles user registration submission (POST /auth/register).
+ * @param {Event} e - Form submit event
+ */
+async function handleRegister(e) {
+  e.preventDefault();
+  clearAuthError();
+
+  const username = DOM.registerUsername.value.trim();
+  const email = DOM.registerEmail.value.trim();
+  const password = DOM.registerPassword.value;
+  const confirmPassword = DOM.registerConfirmPassword.value;
+
+  // Validation guards
+  if (!username || username.length < 2) {
+    showAuthError('Username must be at least 2 characters.');
+    DOM.registerUsername.focus();
+    return;
+  }
+
+  if (!password || password.length < 6) {
+    showAuthError('Password must be at least 6 characters.');
+    DOM.registerPassword.focus();
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    showAuthError('Passwords do not match. Please verify.');
+    DOM.registerConfirmPassword.focus();
+    return;
+  }
+
+  try {
+    DOM.submitRegisterBtn.disabled = true;
+    DOM.submitRegisterBtn.innerHTML = `<span>Creating Account...</span>`;
+
+    const payload = {
+      username,
+      password
+    };
+    if (email) payload.email = email;
+
+    const response = await axios.post(`${API}/auth/register`, payload);
+    const { token, user } = response.data;
+
+    if (!token || !user) {
+      throw new Error('Invalid response structure received from registration server.');
+    }
+
+    localStorage.setItem('tm_token', token);
+    localStorage.setItem('tm_user', JSON.stringify(user));
+    state.currentUser = user;
+
+    showToast(`Account created! Welcome, ${user.username}!`, 'success');
+    closeAuthModal();
+    updateAuthUI();
+    await loadTasks();
+  } catch (error) {
+    console.error('[Auth] Registration error:', error);
+    const msg = error.response?.data?.message || error.message || 'Registration failed. Try another username.';
+    showAuthError(msg);
+  } finally {
+    DOM.submitRegisterBtn.disabled = false;
+    DOM.submitRegisterBtn.innerHTML = `<span>Create Account</span>`;
+  }
+}
+
+/**
+ * Signs out the active user, clears stored credentials, and resets views.
+ */
+function signOut() {
+  localStorage.removeItem('tm_token');
+  localStorage.removeItem('tm_user');
+  state.currentUser = null;
+  state.tasksCache = [];
+  updateAuthUI();
+  showToast('Signed out successfully', 'info');
+}
+
+/**
+ * Switches the active tab in the authentication modal ('signin' | 'register').
+ * @param {'signin'|'register'} tab - Target tab
+ */
+function switchAuthTab(tab) {
+  clearAuthError();
+
+  if (tab === 'signin') {
+    DOM.tabSignInBtn.classList.add('active');
+    DOM.tabSignInBtn.setAttribute('aria-selected', 'true');
+    DOM.tabRegisterBtn.classList.remove('active');
+    DOM.tabRegisterBtn.setAttribute('aria-selected', 'false');
+
+    DOM.signInFormPanel.classList.remove('hidden');
+    DOM.registerFormPanel.classList.add('hidden');
+    DOM.authModalTitle.textContent = 'Sign In to TaskMaster';
+    setTimeout(() => DOM.loginUsername.focus(), 60);
+  } else {
+    DOM.tabRegisterBtn.classList.add('active');
+    DOM.tabRegisterBtn.setAttribute('aria-selected', 'true');
+    DOM.tabSignInBtn.classList.remove('active');
+    DOM.tabSignInBtn.setAttribute('aria-selected', 'false');
+
+    DOM.registerFormPanel.classList.remove('hidden');
+    DOM.signInFormPanel.classList.add('hidden');
+    DOM.authModalTitle.textContent = 'Create TaskMaster Account';
+    setTimeout(() => DOM.registerUsername.focus(), 60);
+  }
+}
+
+/**
+ * Opens the authentication modal dialog.
+ * @param {'signin'|'register'} initialTab - Tab to display upon opening
+ */
+function openAuthModal(initialTab = 'signin') {
+  clearAuthError();
+  DOM.signInForm.reset();
+  DOM.registerForm.reset();
+  DOM.authModal.classList.remove('hidden');
+  switchAuthTab(initialTab);
+}
+
+/**
+ * Closes the authentication modal dialog and clears errors.
+ */
+function closeAuthModal() {
+  DOM.authModal.classList.add('hidden');
+  clearAuthError();
+  DOM.signInForm.reset();
+  DOM.registerForm.reset();
+}
+
+/**
+ * Displays error message within the authentication modal.
+ * @param {string} msg - Error message text
+ */
+function showAuthError(msg) {
+  if (DOM.authErrorAlert && DOM.authErrorText) {
+    DOM.authErrorText.textContent = msg;
+    DOM.authErrorAlert.classList.remove('hidden');
+  }
+}
+
+/**
+ * Clears error notification inside the authentication modal.
+ */
+function clearAuthError() {
+  if (DOM.authErrorAlert && DOM.authErrorText) {
+    DOM.authErrorText.textContent = '';
+    DOM.authErrorAlert.classList.add('hidden');
   }
 }
 
 // ==============================================================================
-// 6. Task Management Services (CRUD & Assignments 1-3)
+// 7. Task Management Services (CRUD & Assignments 1-3)
 // ==============================================================================
 
 /**
- * Fetches tasks from backend (GET /tasks) with query parameters:
- * - userId: Filter by assigned user
- * - category: Filter by category (Work, Personal, Urgent)
- * - completed: Filter by completion state
- * - sort: Sort by createdAt (desc/asc)
+ * Fetches tasks from backend (GET /tasks) for current authenticated user.
+ * Supports query parameters:
+ * - category: Filter by taxonomy ('Work', 'Personal', 'Urgent')
+ * - completed: Filter by status ('true' / 'false')
+ * - sort: Chronological order ('desc' / 'asc')
  */
 async function loadTasks() {
+  if (!state.currentUser) {
+    updateAuthUI();
+    return;
+  }
+
   state.isLoading = true;
   DOM.statusCounter.textContent = 'Refreshing tasks...';
 
   try {
-    // Construct query parameters matching backend route expectations
     const params = {};
-    if (state.currentUserId) {
-      params.userId = state.currentUserId;
-    }
     if (state.filterCategory !== 'all') {
       params.category = state.filterCategory;
     }
@@ -325,7 +583,6 @@ async function loadTasks() {
     const response = await axios.get(`${API}/tasks`, { params });
     state.tasksCache = Array.isArray(response.data) ? response.data : [];
 
-    // Render list and update progress indicators
     renderTasks(state.tasksCache);
     updateStatusBar();
   } catch (error) {
@@ -340,12 +597,16 @@ async function loadTasks() {
 
 /**
  * Creates a new task entity via POST /tasks.
- * Supports Assignments 2 (category) and 4 (userId).
+ * Supports Assignment 2 (category taxonomy).
  */
 async function addTask() {
+  if (!state.currentUser) {
+    openAuthModal('signin');
+    return;
+  }
+
   const title = DOM.taskTitleInput.value.trim();
   const category = DOM.taskCategorySelect.value;
-  const assignedUserId = DOM.taskUserSelect.value || undefined;
 
   if (!title) {
     showToast('Please enter a task title', 'error');
@@ -359,20 +620,17 @@ async function addTask() {
 
     const payload = {
       title,
-      category,
-      userId: assignedUserId
+      category
     };
 
-    const response = await axios.post(`${API}/tasks`, payload);
-    const newTask = response.data;
-
+    await axios.post(`${API}/tasks`, payload);
     showToast('Task added successfully!', 'success');
 
     // Reset input fields
     DOM.taskTitleInput.value = '';
     DOM.taskTitleInput.focus();
 
-    // Refresh tasks list
+    // Reload tasks dataset
     await loadTasks();
   } catch (error) {
     console.error('[API] Error creating task:', error);
@@ -441,11 +699,6 @@ function openEditModal(id) {
   DOM.editTaskCategory.value = task.category || 'Personal';
   DOM.editTaskCompleted.checked = Boolean(task.completed);
 
-  // Set assigned user if available
-  const assignedId = task.userId?._id || task.userId || '';
-  DOM.editTaskUser.value = assignedId;
-
-  // Reveal modal overlay
   DOM.editModal.classList.remove('hidden');
   DOM.editTaskTitle.focus();
 }
@@ -462,13 +715,13 @@ function closeEditModal() {
 /**
  * Submits the updated task title and fields via PUT /tasks/:id.
  * Fulfills Assignment 1.
+ * @param {Event} e - Form submit event
  */
 async function handleSaveEdit(e) {
   e.preventDefault();
   const id = DOM.editTaskId.value;
   const newTitle = DOM.editTaskTitle.value.trim();
   const newCategory = DOM.editTaskCategory.value;
-  const newUserId = DOM.editTaskUser.value || null;
   const newCompleted = DOM.editTaskCompleted.checked;
 
   if (!newTitle) {
@@ -481,7 +734,6 @@ async function handleSaveEdit(e) {
     const payload = {
       title: newTitle,
       category: newCategory,
-      userId: newUserId,
       completed: newCompleted
     };
 
@@ -494,20 +746,6 @@ async function handleSaveEdit(e) {
     const errorMsg = error.response?.data?.message || 'Failed to update task';
     showToast(errorMsg, 'error');
   }
-}
-
-// ==============================================================================
-// 7. Modal Controls (User & Edit Modals)
-// ==============================================================================
-
-function openUserModal() {
-  DOM.userModal.classList.remove('hidden');
-  DOM.newUsername.focus();
-}
-
-function closeUserModal() {
-  DOM.userModal.classList.add('hidden');
-  DOM.createUserForm.reset();
 }
 
 // ==============================================================================
@@ -535,17 +773,16 @@ function renderTasks(tasks) {
     const categoryClass = `category-${category.toLowerCase()}`;
     const formattedDate = formatDate(task.createdAt);
 
-    // Resolve assigned user username if populated
+    // Optional user badge if populated by backend
     let userBadgeHtml = '';
-    if (task.userId) {
-      const username = typeof task.userId === 'object' ? task.userId.username : 'Assigned';
+    if (task.userId && typeof task.userId === 'object' && task.userId.username) {
       userBadgeHtml = `
-        <span class="badge-user" title="Assigned User">
+        <span class="badge-user" title="Task Owner">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
             <circle cx="12" cy="7" r="4"/>
           </svg>
-          <span>${escapeHtml(username)}</span>
+          <span>${escapeHtml(task.userId.username)}</span>
         </span>
       `;
     }
@@ -567,7 +804,7 @@ function renderTasks(tasks) {
           <div class="task-meta">
             <!-- Assignment 2: Category Badge -->
             <span class="badge-category ${categoryClass}">${escapeHtml(category)}</span>
-            <!-- Assignment 4: User Badge -->
+            <!-- User Badge (if available) -->
             ${userBadgeHtml}
             <!-- Timestamp -->
             <span class="task-date">${escapeHtml(formattedDate)}</span>
@@ -594,7 +831,7 @@ function renderTasks(tasks) {
       </div>
     `;
 
-    // Bind event listeners for this task row
+    // Bind row event handlers
     const checkbox = li.querySelector('.task-checkbox');
     checkbox.addEventListener('change', () => toggleTask(taskId, isCompleted));
 
@@ -612,9 +849,15 @@ function renderTasks(tasks) {
  * Calculates task statistics and updates the status bar and progress meter.
  */
 function updateStatusBar() {
+  if (!state.currentUser) {
+    DOM.statusCounter.textContent = 'Please sign in to view and manage your private tasks.';
+    DOM.progressBar.style.width = '0%';
+    DOM.activeFilterBadge.classList.add('hidden');
+    return;
+  }
+
   const total = state.tasksCache.length;
   const completedCount = state.tasksCache.filter((t) => t.completed).length;
-  const activeCount = total - completedCount;
 
   // Update progress percentage
   const percentage = total > 0 ? Math.round((completedCount / total) * 100) : 0;
@@ -625,7 +868,6 @@ function updateStatusBar() {
 
   // Update Filtered Pill indicator if active filters are applied
   const hasActiveFilters = 
-    state.currentUserId !== '' || 
     state.filterCategory !== 'all' || 
     state.filterStatus !== 'all';
 
@@ -651,30 +893,37 @@ function initEventListeners() {
     addTask();
   });
 
-  // 2. User Switcher Dropdown (Assignment 4)
-  DOM.userSelect.addEventListener('change', (e) => {
-    state.currentUserId = e.target.value;
-    // Keep task create form aligned with chosen user
-    DOM.taskUserSelect.value = state.currentUserId;
-    loadTasks();
+  // Prompt sign in if guest clicks on task form
+  DOM.taskForm.addEventListener('click', () => {
+    if (!state.currentUser) {
+      openAuthModal('signin');
+    }
   });
 
-  // 3. User Modal Trigger & Form Submission (Assignment 4)
-  DOM.openUserModalBtn.addEventListener('click', openUserModal);
-  DOM.closeUserModalBtn.addEventListener('click', closeUserModal);
-  DOM.cancelUserBtn.addEventListener('click', closeUserModal);
-  DOM.userModal.addEventListener('click', (e) => {
-    if (e.target === DOM.userModal) closeUserModal();
+  // 2. Header Authentication Controls
+  DOM.openAuthModalBtn.addEventListener('click', () => openAuthModal('signin'));
+  DOM.signOutBtn.addEventListener('click', signOut);
+
+  // 3. Guest State Sign In Button
+  if (DOM.guestSignInBtn) {
+    DOM.guestSignInBtn.addEventListener('click', () => openAuthModal('signin'));
+  }
+
+  // 4. Auth Modal Controls
+  DOM.closeAuthModalBtn.addEventListener('click', closeAuthModal);
+  DOM.authModal.addEventListener('click', (e) => {
+    if (e.target === DOM.authModal) closeAuthModal();
   });
 
-  DOM.createUserForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const username = DOM.newUsername.value;
-    const email = DOM.newUserEmail.value;
-    createUser(username, email);
-  });
+  // Tab switching in Auth Modal
+  DOM.tabSignInBtn.addEventListener('click', () => switchAuthTab('signin'));
+  DOM.tabRegisterBtn.addEventListener('click', () => switchAuthTab('register'));
 
-  // 4. Status Filter Tabs (All / Active / Completed)
+  // Auth Form Submissions
+  DOM.signInForm.addEventListener('submit', handleLogin);
+  DOM.registerForm.addEventListener('submit', handleRegister);
+
+  // 5. Status Filter Tabs (All / Active / Completed)
   DOM.filterTabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       DOM.filterTabs.forEach((t) => {
@@ -689,13 +938,13 @@ function initEventListeners() {
     });
   });
 
-  // 5. Category Filter Dropdown (Assignment 2)
+  // 6. Category Filter Dropdown (Assignment 2)
   DOM.categoryFilter.addEventListener('change', (e) => {
     state.filterCategory = e.target.value;
     loadTasks();
   });
 
-  // 6. Chronological Sort Toggle (Assignment 3)
+  // 7. Chronological Sort Toggle (Assignment 3)
   DOM.sortToggleBtn.addEventListener('click', () => {
     if (state.sortOrder === 'desc') {
       state.sortOrder = 'asc';
@@ -713,7 +962,7 @@ function initEventListeners() {
     loadTasks();
   });
 
-  // 7. Edit Modal Controls (Assignment 1)
+  // 8. Edit Modal Controls (Assignment 1)
   DOM.closeEditModalBtn.addEventListener('click', closeEditModal);
   DOM.cancelEditBtn.addEventListener('click', closeEditModal);
   DOM.editModal.addEventListener('click', (e) => {
@@ -721,15 +970,14 @@ function initEventListeners() {
   });
   DOM.editTaskForm.addEventListener('submit', handleSaveEdit);
 
-  // 8. Global Keyboard Shortcuts
+  // 9. Global Keyboard Shortcuts (Escape to dismiss modals)
   window.addEventListener('keydown', (e) => {
-    // ESC key closes any open modal
     if (e.key === 'Escape') {
       if (!DOM.editModal.classList.contains('hidden')) {
         closeEditModal();
       }
-      if (!DOM.userModal.classList.contains('hidden')) {
-        closeUserModal();
+      if (!DOM.authModal.classList.contains('hidden')) {
+        closeAuthModal();
       }
     }
   });
@@ -744,8 +992,10 @@ function initEventListeners() {
  */
 document.addEventListener('DOMContentLoaded', async () => {
   initEventListeners();
-  // 1. Fetch user accounts first to populate dropdowns
-  await loadUsers();
-  // 2. Fetch and render initial task dataset
-  await loadTasks();
+  // 1. Verify active token or show guest state
+  const isAuthenticated = await checkAuthSession();
+  // 2. If authenticated, fetch and render user's tasks
+  if (isAuthenticated) {
+    await loadTasks();
+  }
 });

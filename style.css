@@ -15,6 +15,9 @@
  *   * Personal: Emerald/Green accent
  *   * Urgent: Crimson/Red accent
  * - High-accessibility contrast ratios and keyboard focus indicators.
+ * - Dark Theme Overscroll & Canvas Invariant:
+ *   * html, body, and .app-container set to #0d1117.
+ *   * overscroll-behavior-y: none to prevent rubber-band canvas detachment.
  * ==============================================================================
  */
 
@@ -24,7 +27,7 @@
 
 :root {
   /* Color Palette - Core Backgrounds & Surfaces */
-  --bg-primary: #0a0e17;
+  --bg-primary: #0d1117;
   --bg-card: #131b2e;
   --bg-card-hover: #19233c;
   --bg-input: #0e1524;
@@ -40,7 +43,7 @@
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
-  --text-inverse: #0a0e17;
+  --text-inverse: #0d1117;
 
   /* Primary Accent & Brand (Indigo) */
   --primary-accent: #6366f1;
@@ -100,13 +103,14 @@ html {
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
-  background-color: var(--bg-primary);
+  background-color: #0d1117;
+  overscroll-behavior-y: none;
 }
 
 body {
   font-family: var(--font-family-body);
   color: var(--text-primary);
-  background-color: var(--bg-primary);
+  background-color: #0d1117;
   min-height: 100vh;
   padding: 2rem 1rem 3rem 1rem;
   display: flex;
@@ -114,6 +118,7 @@ body {
   align-items: flex-start;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
 }
 
 /* Screen Reader Only Utility */
@@ -146,10 +151,12 @@ body {
   display: flex;
   flex-direction: column;
   row-gap: 1.25rem;
+  background-color: #0d1117;
+  overscroll-behavior-y: none;
 }
 
 /* ==============================================================================
-   3. Application Header & User Switcher (Assignment 4)
+   3. Application Header & Authentication Controls
    ============================================================================== */
 
 .app-header {
@@ -194,14 +201,77 @@ body {
   font-weight: 400;
 }
 
-.user-control-bar {
+/* Header Authentication Bar */
+.auth-control-bar {
   display: flex;
   align-items: center;
-  column-gap: 0.5rem;
+  column-gap: 0.75rem;
 }
 
-.user-select-wrapper {
-  min-width: 160px;
+.auth-guest-view {
+  display: flex;
+  align-items: center;
+}
+
+.btn-auth-trigger {
+  font-weight: 600;
+  padding: 0.5rem 1.1rem;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+}
+
+.auth-user-view {
+  display: flex;
+  align-items: center;
+  column-gap: 0.75rem;
+}
+
+.user-badge {
+  display: inline-flex;
+  align-items: center;
+  column-gap: 0.55rem;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-full);
+  padding: 0.3rem 0.85rem 0.3rem 0.35rem;
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.35);
+}
+
+.user-handle {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-signout {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  background-color: transparent;
+}
+
+.btn-signout:hover {
+  color: var(--color-danger);
+  border-color: rgba(239, 68, 68, 0.35);
+  background-color: rgba(239, 68, 68, 0.1);
 }
 
 /* ==============================================================================
@@ -302,7 +372,7 @@ body {
   justify-content: center;
   column-gap: 0.45rem;
   height: 42px;
-  padding: 0 1rem;
+  padding: 0 1.2rem;
   font-family: var(--font-family-body);
   font-size: 0.88rem;
   font-weight: 600;
@@ -314,30 +384,36 @@ body {
   transition: all var(--transition-fast);
 }
 
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .btn-primary {
-  background-color: var(--primary-accent);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
 }
 
 .btn-primary:hover {
-  background-color: var(--primary-accent-hover);
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.5);
-  transform: translateY(-1px);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.45);
 }
 
 .btn-secondary {
-  background-color: rgba(255, 255, 255, 0.07);
+  background-color: rgba(255, 255, 255, 0.05);
   color: var(--text-primary);
   border-color: var(--border-subtle);
 }
 
 .btn-secondary:hover {
-  background-color: rgba(255, 255, 255, 0.12);
+  background-color: rgba(255, 255, 255, 0.1);
   border-color: var(--border-medium);
 }
 
@@ -349,8 +425,8 @@ body {
 
 .btn-outline:hover {
   color: var(--text-primary);
-  background-color: rgba(255, 255, 255, 0.05);
   border-color: var(--border-medium);
+  background-color: rgba(255, 255, 255, 0.03);
 }
 
 .btn-icon {
@@ -374,6 +450,13 @@ body {
   background-color: rgba(255, 255, 255, 0.08);
 }
 
+.btn-full-width {
+  width: 100%;
+  justify-content: center;
+  height: 42px;
+  font-size: 0.95rem;
+}
+
 /* ==============================================================================
    6. Card Container Styles
    ============================================================================== */
@@ -392,7 +475,7 @@ body {
 }
 
 /* ==============================================================================
-   7. Task Creation Form
+   7. Form Layout & Task Input Grid
    ============================================================================== */
 
 .task-form {
@@ -405,6 +488,9 @@ body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.primary-row {
   width: 100%;
 }
 
@@ -414,8 +500,9 @@ body {
 
 .secondary-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 0.75rem;
+  max-width: 260px;
 }
 
 /* ==============================================================================
@@ -428,10 +515,9 @@ body {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.75rem;
-  padding: 0.85rem 1.25rem;
+  padding: 0.75rem 1.25rem;
 }
 
-/* Filter Status Pill Tabs */
 .filter-tabs {
   display: inline-flex;
   align-items: center;
@@ -439,6 +525,7 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 0.25rem;
+  column-gap: 0.25rem;
 }
 
 .tab-btn {
@@ -459,31 +546,31 @@ body {
 }
 
 .tab-btn.active {
-  background-color: var(--primary-accent);
-  color: #ffffff;
+  background-color: var(--bg-card);
+  color: var(--text-primary);
   font-weight: 600;
-  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.35);
+  box-shadow: var(--shadow-sm);
 }
 
 .toolbar-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  column-gap: 0.5rem;
 }
 
 .category-filter-wrapper {
-  width: 150px;
-}
-
-.filter-select {
-  height: 36px;
-  font-size: 0.82rem;
+  min-width: 150px;
 }
 
 .sort-btn {
-  height: 36px;
-  padding: 0 0.85rem;
+  height: 38px;
   font-size: 0.82rem;
+  padding: 0 0.85rem;
+  color: var(--text-secondary);
+}
+
+.sort-btn:hover {
+  color: var(--text-primary);
 }
 
 .sort-icon {
@@ -491,13 +578,13 @@ body {
 }
 
 /* ==============================================================================
-   9. Status Summary & Progress Bar
+   9. Status Summary Bar & Completion Progress
    ============================================================================== */
 
 .status-summary-bar {
   display: flex;
   flex-direction: column;
-  row-gap: 0.45rem;
+  row-gap: 0.5rem;
   padding: 0 0.25rem;
 }
 
@@ -509,18 +596,16 @@ body {
 
 .status-counter-text {
   font-size: 0.82rem;
-  font-weight: 500;
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .filter-pill-badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 0.15rem 0.5rem;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.55rem;
   border-radius: var(--radius-full);
   background-color: rgba(99, 102, 241, 0.15);
   color: #818cf8;
@@ -530,10 +615,10 @@ body {
 .progress-track {
   width: 100%;
   height: 6px;
-  background-color: var(--bg-input);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-full);
   overflow: hidden;
-  border: 1px solid var(--border-subtle);
 }
 
 .progress-fill {
@@ -544,60 +629,61 @@ body {
 }
 
 /* ==============================================================================
-   10. Task List Items & Interactive Controls
+   10. Task List Container & Items (Core CRUD)
    ============================================================================== */
 
 .tasks-container {
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.75rem;
 }
 
 .task-list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  row-gap: 0.65rem;
+  row-gap: 0.5rem;
 }
 
 .task-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.85rem;
+  column-gap: 0.85rem;
   background-color: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 0.9rem 1.1rem;
+  padding: 0.85rem 1rem;
   box-shadow: var(--shadow-sm);
-  transition: transform var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
 
 .task-item:hover {
   background-color: var(--bg-card-hover);
   border-color: var(--border-medium);
-  transform: translateY(-1px);
 }
 
 .task-left-section {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   column-gap: 0.85rem;
   flex: 1;
   min-width: 0;
 }
 
-/* Custom Checkbox Toggle */
 .task-checkbox {
   appearance: none;
   -webkit-appearance: none;
   width: 20px;
   height: 20px;
-  border: 2px solid var(--text-muted);
+  border: 2px solid var(--border-medium);
   border-radius: var(--radius-sm);
-  background-color: transparent;
+  background-color: var(--bg-input);
   cursor: pointer;
-  display: inline-grid;
+  display: grid;
   place-content: center;
   flex-shrink: 0;
+  margin-top: 0.15rem;
   transition: all var(--transition-fast);
 }
 
@@ -612,8 +698,8 @@ body {
 
 .task-checkbox:checked::before {
   content: "";
-  width: 10px;
-  height: 6px;
+  width: 9px;
+  height: 5px;
   border-left: 2px solid #ffffff;
   border-bottom: 2px solid #ffffff;
   transform: rotate(-45deg) translate(1px, -1px);
@@ -622,7 +708,8 @@ body {
 .task-content {
   display: flex;
   flex-direction: column;
-  row-gap: 0.25rem;
+  row-gap: 0.35rem;
+  flex: 1;
   min-width: 0;
 }
 
@@ -632,70 +719,72 @@ body {
   color: var(--text-primary);
   line-height: 1.4;
   word-break: break-word;
-  transition: color var(--transition-fast), text-decoration var(--transition-fast), opacity var(--transition-fast);
+  transition: color var(--transition-fast);
 }
 
-/* Completed Task Styling */
+/* Completed Task Visual State */
+.task-item.completed {
+  opacity: 0.65;
+  background-color: rgba(19, 27, 46, 0.45);
+}
+
 .task-item.completed .task-title {
   text-decoration: line-through;
   color: var(--text-muted);
-  opacity: 0.75;
 }
+
+/* ==============================================================================
+   11. Metadata Badges (Category & User Assignment)
+   ============================================================================== */
 
 .task-meta {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.45rem;
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  font-size: 0.72rem;
 }
-
-/* ==============================================================================
-   11. Category Badges (Assignment 2)
-   ============================================================================== */
 
 .badge-category {
   display: inline-flex;
   align-items: center;
-  padding: 0.15rem 0.55rem;
-  font-size: 0.72rem;
+  padding: 0.15rem 0.5rem;
   font-weight: 600;
-  border-radius: var(--radius-sm);
-  line-height: 1.2;
+  border-radius: var(--radius-full);
+  border-width: 1px;
+  border-style: solid;
 }
 
-/* Work Badge: Blue Accent */
+/* Category: Work */
 .badge-category.category-work {
   background-color: var(--cat-work-bg);
   color: var(--cat-work-text);
-  border: 1px solid var(--cat-work-border);
+  border-color: var(--cat-work-border);
 }
 
-/* Personal Badge: Emerald Green Accent */
+/* Category: Personal */
 .badge-category.category-personal {
   background-color: var(--cat-personal-bg);
   color: var(--cat-personal-text);
-  border: 1px solid var(--cat-personal-border);
+  border-color: var(--cat-personal-border);
 }
 
-/* Urgent Badge: Crimson Red Accent */
+/* Category: Urgent */
 .badge-category.category-urgent {
   background-color: var(--cat-urgent-bg);
   color: var(--cat-urgent-text);
-  border: 1px solid var(--cat-urgent-border);
+  border-color: var(--cat-urgent-border);
 }
 
-/* User Assignment Badge (Assignment 4) */
+/* User Assignment Badge */
 .badge-user {
   display: inline-flex;
   align-items: center;
   column-gap: 0.25rem;
-  padding: 0.15rem 0.5rem;
-  font-size: 0.72rem;
+  padding: 0.12rem 0.45rem;
   font-weight: 500;
-  border-radius: var(--radius-sm);
-  background-color: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-full);
+  background-color: rgba(255, 255, 255, 0.05);
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
 }
@@ -741,7 +830,7 @@ body {
 }
 
 /* ==============================================================================
-   12. Empty State Placeholder
+   12. Empty State & Guest State Placeholders
    ============================================================================== */
 
 .empty-state {
@@ -774,8 +863,33 @@ body {
   max-width: 380px;
 }
 
+/* Guest Locked State */
+.guest-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3.5rem 1.5rem;
+  background-color: var(--bg-card);
+  border: 1px dashed var(--border-medium);
+  border-radius: var(--radius-lg);
+}
+
+.guest-icon {
+  color: var(--primary-accent);
+  margin-bottom: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-guest-signin {
+  margin-top: 1rem;
+}
+
 /* ==============================================================================
-   13. Modals & Dialog Overlays (Assignment 1 & 4)
+   13. Modals & Dialog Overlays (Assignment 1 & Authentication)
    ============================================================================== */
 
 .modal-overlay {
@@ -860,6 +974,74 @@ body {
   justify-content: flex-end;
   column-gap: 0.75rem;
   margin-top: 0.5rem;
+}
+
+/* Auth Modal Specific Styles */
+.auth-modal-card {
+  max-width: 440px;
+}
+
+.auth-tabs {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.25rem;
+  column-gap: 0.25rem;
+}
+
+.auth-tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-family-body);
+  font-size: 0.86rem;
+  font-weight: 600;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: center;
+}
+
+.auth-tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.auth-tab-btn.active {
+  background-color: var(--primary-accent);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+}
+
+.auth-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Auth Error Alert */
+.auth-error-alert {
+  display: flex;
+  align-items: center;
+  column-gap: 0.65rem;
+  background-color: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.85rem;
+  color: #fca5a5;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.error-alert-icon {
+  color: var(--color-danger);
+  flex-shrink: 0;
+}
+
+.error-alert-text {
+  flex: 1;
 }
 
 /* ==============================================================================
@@ -975,16 +1157,24 @@ body {
     align-items: stretch;
   }
 
-  .user-control-bar {
+  .auth-control-bar {
     width: 100%;
     justify-content: space-between;
   }
 
-  .user-select-wrapper {
+  .auth-guest-view,
+  .auth-user-view {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .user-badge {
     flex: 1;
+    min-width: 0;
   }
 
   .secondary-row {
+    max-width: 100%;
     grid-template-columns: 1fr;
   }
 

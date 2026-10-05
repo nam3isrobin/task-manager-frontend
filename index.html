@@ -63,7 +63,7 @@
               type="text" 
               id="loginFsUsername" 
               class="form-input" 
-              placeholder="e.g. alex_dev or admin" 
+              placeholder="e.g. alex_dev or demo_user" 
               required 
               autocomplete="username"
               aria-label="Login Username"
@@ -161,7 +161,10 @@
       <!-- Quick Demo Credentials Hint -->
       <div class="auth-demo-hint">
         <span class="demo-hint-title">Standard Demo Credentials:</span>
-        <div class="demo-credential-pills">  
+        <div class="demo-credential-pills">
+          <button type="button" class="demo-pill" id="demoUserPill" title="Quick fill demo user">
+            <span class="demo-pill-role">User:</span> alex_dev
+          </button>
         </div>
       </div>
     </div>
@@ -188,14 +191,8 @@
 
       <!-- User Authentication Controls -->
       <div class="auth-control-bar" id="authControlBar" role="region" aria-label="User Account Controls">
-        <!-- Authenticated User View: Profile Badge + Admin Portal Link + Sign Out Button -->
+        <!-- Authenticated User View: Profile Badge + Sign Out Button -->
         <div id="authUserView" class="auth-user-view hidden">
-          <a href="/admin" id="adminPortalBtn" class="btn btn-secondary btn-admin hidden" title="Access Administrator Portal" aria-label="Admin Portal">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-            <span>Admin Portal</span>
-          </a>
           <div class="user-badge" id="userProfileBadge" title="Current authenticated account">
             <div class="user-avatar" id="userAvatarText" aria-hidden="true">U</div>
             <span class="user-handle" id="userHandle">@user</span>

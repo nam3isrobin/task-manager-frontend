@@ -119,7 +119,6 @@ const DOM = {
   authControlBar: document.getElementById('authControlBar'),
   authGuestView: document.getElementById('authGuestView'),
   authUserView: document.getElementById('authUserView'),
-  adminPortalBtn: document.getElementById('adminPortalBtn'),
   openAuthModalBtn: document.getElementById('openAuthModalBtn'),
   userProfileBadge: document.getElementById('userProfileBadge'),
   userAvatarText: document.getElementById('userAvatarText'),
@@ -146,7 +145,6 @@ const DOM = {
   registerFsConfirmPassword: document.getElementById('registerFsConfirmPassword'),
   submitRegisterFsBtn: document.getElementById('submitRegisterFsBtn'),
   demoUserPill: document.getElementById('demoUserPill'),
-  demoAdminPill: document.getElementById('demoAdminPill'),
 
   // Auth Modal Dialog & Tab Switcher (Secondary / Legacy modal)
   authModal: document.getElementById('authModal'),
@@ -342,16 +340,6 @@ function updateAuthUI() {
     if (DOM.userHandle) DOM.userHandle.textContent = `@${username}`;
     if (DOM.userAvatarText) DOM.userAvatarText.textContent = username.charAt(0).toUpperCase();
 
-    // 4. Role Authorization: Show "Admin Portal" button if role is admin or username is admin
-    const isAdmin = Boolean(state.currentUser && (state.currentUser.role === 'admin' || state.currentUser.username === 'admin'));
-    if (DOM.adminPortalBtn) {
-      if (isAdmin) {
-        DOM.adminPortalBtn.classList.remove('hidden');
-      } else {
-        DOM.adminPortalBtn.classList.add('hidden');
-      }
-    }
-
     // Enable task creation form inputs
     if (DOM.taskTitleInput) {
       DOM.taskTitleInput.disabled = false;
@@ -371,7 +359,6 @@ function updateAuthUI() {
     // 3. Hide authenticated controls
     if (DOM.authGuestView) DOM.authGuestView.classList.remove('hidden');
     if (DOM.authUserView) DOM.authUserView.classList.add('hidden');
-    if (DOM.adminPortalBtn) DOM.adminPortalBtn.classList.add('hidden');
 
     // Clean up task list memory
     if (DOM.taskList) DOM.taskList.innerHTML = '';
@@ -1136,17 +1123,6 @@ function initEventListeners() {
     });
   }
 
-  if (DOM.demoAdminPill) {
-    DOM.demoAdminPill.addEventListener('click', () => {
-      switchFullscreenAuthTab('signin');
-      if (DOM.loginFsUsername) DOM.loginFsUsername.value = 'admin';
-      if (DOM.loginFsPassword) {
-        DOM.loginFsPassword.value = 'AdminPass123!';
-        DOM.loginFsPassword.focus();
-      }
-    });
-  }
-
   // 3. Guest State Sign In Button
   if (DOM.guestSignInBtn) {
     DOM.guestSignInBtn.addEventListener('click', () => {
@@ -1240,16 +1216,6 @@ function initEventListeners() {
  */
 document.addEventListener('DOMContentLoaded', async () => {
   initEventListeners();
-
-  // If redirected with ?auth=admin query, select signin tab and pre-fill admin username
-  if (window.location.search.includes('auth=admin')) {
-    switchFullscreenAuthTab('signin');
-    if (DOM.loginFsUsername) DOM.loginFsUsername.value = 'admin';
-    if (DOM.loginFsPassword) {
-      DOM.loginFsPassword.value = 'AdminPass123!';
-      DOM.loginFsPassword.focus();
-    }
-  }
 
   // 1. Verify active token or show fullscreen auth state
   const isAuthenticated = await checkAuthSession();

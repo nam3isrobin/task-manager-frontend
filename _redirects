@@ -1,10 +1,9 @@
 # ==============================================================================
 # Netlify / Cloudflare Pages / Static Server Redirects (`_redirects`)
 # ==============================================================================
-# Directs admin portal and REST API endpoints to backend service when deployed.
+# Directs REST API endpoints to backend service when deployed.
 # ==============================================================================
 
-/admin    /admin.html                         200
 /tasks/*  http://localhost:3000/tasks/:splat  200
 /tasks    http://localhost:3000/tasks        200
 /users/*  http://localhost:3000/users/:splat  200

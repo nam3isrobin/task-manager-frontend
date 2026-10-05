@@ -8,7 +8,6 @@ Production-ready static frontend for the Day 19 Task Manager application built w
 - 🛡️ Automatic Bearer Token injection via Axios Interceptors
 - 🚪 Graceful Session Expiration: Automatic 401 detection, token purge, and re-login prompt
 - 👤 Authenticated user profile badge & one-click Sign Out
-- ⚡ Dedicated Admin Command Center (`/admin.html`): Real-time telemetry, user management, and global cross-tenant task explorer
 - Assignment 1: Modal task title & property editing
 - Assignment 2: Categorization badges (`Work`, `Personal`, `Urgent`) and filter controls
 - Assignment 3: Chronological ordering (Newest / Oldest first toggle)

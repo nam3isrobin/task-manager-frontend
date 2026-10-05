@@ -10,13 +10,6 @@
   # Directory containing index.html, style.css, script.js, and static assets
   publish = "."
 
-# Standalone Admin Portal Rewrite
-[[redirects]]
-  from = "/admin"
-  to = "/admin.html"
-  status = 200
-  force = true
-
 # Proxy rules routing API requests to backend host (Render live backend)
 [[redirects]]
   from = "/tasks/*"

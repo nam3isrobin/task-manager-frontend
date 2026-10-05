@@ -1219,7 +1219,7 @@ body {
 }
 
 /* ==============================================================================
-   16. Fullscreen Dedicated Authentication View & Admin Portal Button
+   16. Fullscreen Dedicated Authentication View
    ============================================================================== */
 
 .auth-fullscreen-container {
@@ -1360,27 +1360,4 @@ body {
   margin-right: 0.2rem;
 }
 
-/* Admin Portal Button in App Header */
-.btn-admin {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  color: #c084fc;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.4rem 0.75rem;
-  font-size: 0.8125rem;
-  text-decoration: none;
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
-}
-
-.btn-admin:hover {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.35), rgba(168, 85, 247, 0.35));
-  border-color: #c084fc;
-  color: #f3e8ff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.25);
-}
 
